@@ -1,4 +1,5 @@
 import "./globals.css";
+import Image from "next/image";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
 import { getServerSession } from "next-auth";
@@ -41,16 +42,17 @@ export default async function RootLayout({
             >
               {/* Desktop-version */}
               <div className="hidden h-18 items-center justify-between px-6 sm:flex">
-                {/* Left: hamburger + visually hidden logo */}
+                {/* Left: hamburger + logo */}
                 <div className="flex items-center gap-2">
                   <MobileMenu />
-                  <Link
-                    href="/"
-                    className="pointer-events-none select-none"
-                    aria-hidden="true"
-                    tabIndex={-1}
-                  >
-                    <span className="block h-[30px] w-[175px]" />
+                  <Link href="/" className="hover:text-brand-600 transition">
+                    <Image
+                      src="/logo.png"
+                      alt="Ordina"
+                      width={175}
+                      height={30}
+                      className="object-contain"
+                    />
                   </Link>
                 </div>
 
@@ -72,14 +74,20 @@ export default async function RootLayout({
                   <MobileMenu />
                 </div>
 
-                {/* Center: visually hidden logo to preserve layout */}
+                {/* Center: logo */}
                 <Link
                   href="/"
-                  className="shrink-0"
-                  aria-hidden="true"
-                  tabIndex={-1}
+                  className="shrink-0 hover:opacity-90 transition"
+                  aria-label="Gå till startsidan"
                 >
-                  <span className="block h-[26px] w-[124px]" />
+                  <Image
+                    src="/logo.png"
+                    alt="Ordina"
+                    width={124}
+                    height={26}
+                    priority
+                    className="object-contain"
+                  />
                 </Link>
 
                 {/* Right: user avatar (authenticator warning removed) */}
