@@ -1,5 +1,8 @@
 // src/app/page.tsx
 import { getServerSession } from "next-auth";
+import Link from "next/link";
+import { Sparkles, CheckCircle2 } from "lucide-react";
+
 import { authOptions } from "@/lib/auth";
 import HomeClient from "./HomeClient";
 
@@ -10,16 +13,96 @@ export default async function HomePage() {
   // Ej inloggad – visa enkel hero
   if (!session) {
     return (
-      <div className="min-h-[70vh] grid place-items-center p-6">
-        <div className="max-w-lg text-center">
-          <h1 className="text-2xl font-semibold">Välkommen till Ordina</h1>
-          <p className="mt-2 text-neutral-600">Logga in för att skapa och följa upp ordrar.</p>
-          <a
-            href="/login"
-            className="mt-6 inline-flex rounded-xl bg-brand-600 px-4 py-2 text-white hover:bg-brand-700"
-          >
-            Logga in
-          </a>
+      <div className="relative overflow-hidden bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.12),_transparent_60%)]">
+        <div className="pointer-events-none absolute inset-y-0 left-[-20%] -z-10 h-[320px] w-[320px] rounded-full bg-brand-100/50 blur-3xl sm:left-[-12%] sm:h-[380px] sm:w-[380px]" />
+        <div className="pointer-events-none absolute -right-12 top-16 -z-10 hidden h-[420px] w-[420px] rounded-[32px] border border-brand-100/70 bg-white/70 shadow-[0_50px_120px_-60px_rgba(15,23,42,0.35)] backdrop-blur-xl lg:block" />
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-16 px-6 py-20 sm:px-10 lg:flex-row lg:items-center">
+          <div className="max-w-2xl space-y-8 text-center lg:text-left">
+            <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-white px-4 py-1 text-sm font-medium text-brand-700 shadow-[0_10px_40px_-30px_rgba(15,23,42,0.45)]">
+              <Sparkles className="h-4 w-4 text-brand-600" aria-hidden="true" />
+              Ordina gör orderhantering enkelt
+            </span>
+            <h1 className="text-4xl font-semibold leading-tight text-neutral-900 sm:text-5xl">
+              Planera, följ upp och fakturera med full kontroll
+            </h1>
+            <p className="text-lg leading-relaxed text-neutral-600">
+              Vårt digitala ordersystem samlar allt du behöver i en modern arbetsyta – från arbetsorder till fakturering. Få överblick över pågående projekt, involvera teamet och håll kunderna uppdaterade utan extra administration.
+            </p>
+            <div className="flex flex-col items-center gap-3 sm:flex-row sm:justify-center lg:justify-start">
+              <Link
+                href="/login"
+                className="inline-flex items-center justify-center rounded-xl bg-brand-600 px-6 py-3 text-base font-semibold text-white shadow-lg shadow-brand-500/20 transition hover:-translate-y-0.5 hover:bg-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+              >
+                Logga in och kom igång
+              </Link>
+              <Link
+                href="/home"
+                className="inline-flex items-center justify-center rounded-xl border border-brand-100 bg-white px-6 py-3 text-base font-semibold text-brand-700 shadow-[0_12px_40px_-32px_rgba(15,23,42,0.45)] transition hover:border-brand-200 hover:text-brand-800 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-200"
+              >
+                Utforska plattformen
+              </Link>
+            </div>
+            <div className="grid gap-4 pt-6 text-left sm:grid-cols-2">
+              {[
+                {
+                  title: "Snabb orderöversikt",
+                  description: "Se status på alla jobb och vem som ansvarar – utan att öppna separata system.",
+                },
+                {
+                  title: "Smart schemaläggning",
+                  description: "Planera resurser med drag och släpp och få automatiska påminnelser.",
+                },
+                {
+                  title: "Smidig fakturering",
+                  description: "Generera fakturaunderlag direkt från utfört arbete – alltid korrekt och komplett.",
+                },
+                {
+                  title: "Säker delning",
+                  description: "Ge kunder och kollegor rätt åtkomst med tvåfaktorsinloggning och loggning.",
+                },
+              ].map((feature) => (
+                <div
+                  key={feature.title}
+                  className="flex items-start gap-3 rounded-2xl border border-brand-100 bg-white p-5 shadow-[0_18px_40px_-32px_rgba(15,23,42,0.35)]"
+                >
+                  <CheckCircle2 className="mt-1 h-5 w-5 text-brand-600" aria-hidden="true" />
+                  <div className="space-y-1 text-sm">
+                    <p className="font-semibold text-neutral-900">{feature.title}</p>
+                    <p className="text-neutral-600">{feature.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="mx-auto w-full max-w-sm rounded-3xl border border-brand-100 bg-white p-8 text-left shadow-[0_30px_90px_-45px_rgba(15,23,42,0.4)]">
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <p className="text-sm font-medium uppercase tracking-[0.32em] text-brand-600">Ögonblicksbild</p>
+                <p className="text-2xl font-semibold text-neutral-900">Teamets dag i fokus</p>
+              </div>
+              <dl className="grid grid-cols-2 gap-4 text-sm">
+                <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+                  <dt className="text-sm font-medium text-neutral-600">Aktiva jobb</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-neutral-900">18</dd>
+                </div>
+                <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+                  <dt className="text-sm font-medium text-neutral-600">Leveranser idag</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-neutral-900">6</dd>
+                </div>
+                <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+                  <dt className="text-sm font-medium text-neutral-600">Meddelanden</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-neutral-900">12</dd>
+                </div>
+                <div className="rounded-2xl border border-brand-100 bg-brand-50/60 p-4">
+                  <dt className="text-sm font-medium text-neutral-600">Fakturor klara</dt>
+                  <dd className="mt-1 text-2xl font-semibold text-neutral-900">4</dd>
+                </div>
+              </dl>
+              <p className="text-sm leading-relaxed text-neutral-600">
+                All data uppdateras i realtid och visas i tydliga kort. När du loggar in möts du av en arbetsyta som hjälper dig prioritera rätt saker.
+              </p>
+            </div>
+          </div>
         </div>
       </div>
     );
