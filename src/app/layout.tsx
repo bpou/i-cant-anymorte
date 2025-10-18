@@ -1,5 +1,4 @@
 import "./globals.css";
-import Image from "next/image";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
 import { getServerSession } from "next-auth";
@@ -47,18 +46,11 @@ export default async function RootLayout({
                   <MobileMenu />
                   <Link
                     href="/"
-                    className="pointer-events-none select-none opacity-0"
+                    className="pointer-events-none select-none"
                     aria-hidden="true"
                     tabIndex={-1}
                   >
-                    <Image
-                      src="/logo.png"
-                      alt="Ordina"
-                      width={175}
-                      height={30}
-                      className="object-contain"
-                      aria-hidden
-                    />
+                    <span className="block h-[30px] w-[175px]" />
                   </Link>
                 </div>
 
@@ -83,19 +75,11 @@ export default async function RootLayout({
                 {/* Center: visually hidden logo to preserve layout */}
                 <Link
                   href="/"
-                  className="shrink-0 opacity-0"
+                  className="shrink-0"
                   aria-hidden="true"
                   tabIndex={-1}
                 >
-                  <Image
-                    src="/logo.png"
-                    alt="Ordina"
-                    width={124}
-                    height={26}
-                    priority
-                    className="object-contain"
-                    aria-hidden
-                  />
+                  <span className="block h-[26px] w-[124px]" />
                 </Link>
 
                 {/* Right: user avatar (authenticator warning removed) */}
