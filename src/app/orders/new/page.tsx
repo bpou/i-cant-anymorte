@@ -15,5 +15,8 @@ export default async function Page() {
     redirect("/403"); // saknar behörighet
   }
 
-  return <NewOrderClient />;
+  const user = session.user as any;
+  const defaultOurReference = user?.name ?? user?.email ?? "";
+
+  return <NewOrderClient defaultOurReference={defaultOurReference} />;
 }

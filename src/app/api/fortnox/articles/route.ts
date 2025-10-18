@@ -8,9 +8,10 @@ export async function GET(req: NextRequest) {
   const page = Number(searchParams.get("page") ?? 1);
   const limit = Number(searchParams.get("limit") ?? 50);
   const tenantId = searchParams.get("tenantId") ?? undefined;
+  const articleNumber = searchParams.get("articleNumber") ?? undefined;
 
   try {
-    const { items } = await listFortnoxArticles({ query, page, limit, tenantId });
+    const { items } = await listFortnoxArticles({ query, articleNumber, page, limit, tenantId });
     return NextResponse.json({ articles: items });
   } catch (e: any) {
     return NextResponse.json({ error: e?.message ?? "Fortnox articles error" }, { status: 500 });

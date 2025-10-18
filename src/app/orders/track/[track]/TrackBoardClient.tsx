@@ -2,7 +2,7 @@
 
 import useSWR from "swr";
 import Link from "next/link";
-import { useCallback, useEffect, useRef, useState } from "react";
+import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import {
   DndContext,
@@ -116,7 +116,7 @@ function colorOf(s: unknown): string {
 }
 
 // ============================
-// Hook: mäter kolumn-rects
+// Hook: mäter kolumn-rects (fixad)
 // ============================
 function useColumnRects() {
   const refs = useRef<Record<Status, HTMLDivElement | null>>({
@@ -131,9 +131,11 @@ function useColumnRects() {
     LEVERANS: null,
     AVSLUTAD: null,
   });
+
   const setRef = useCallback((status: Status) => (el: HTMLDivElement | null) => {
     refs.current[status] = el;
   }, []);
+
   const measure = useCallback(() => {
     const next: Record<Status, DOMRect | null> = {
       INKOMMANDE: null,
@@ -147,23 +149,32 @@ function useColumnRects() {
     });
     setRects(next);
   }, []);
-  useEffect(() => {
-    measure();
-    const ro = new ResizeObserver(measure);
+
+  useLayoutEffect(() => {
+    // Vänta tills layouten är applicerad innan vi mäter första gången
+    const raf = requestAnimationFrame(() => {
+      measure();
+    });
+
+    const ro = new ResizeObserver(() => measure());
     (STATI as readonly Status[]).forEach((s) => {
       const el = refs.current[s];
       if (el) ro.observe(el);
     });
+
     const onScroll = () => measure();
     window.addEventListener("scroll", onScroll, true);
     window.addEventListener("resize", measure);
+
     return () => {
+      cancelAnimationFrame(raf);
       ro.disconnect();
       window.removeEventListener("scroll", onScroll, true);
       window.removeEventListener("resize", measure);
     };
   }, [measure]);
-  return { setRef, rects };
+
+  return { setRef, rects, measure };
 }
 
 // ============================
@@ -182,7 +193,7 @@ export default function TrackBoardClient({ track }: { track: Track }) {
   const [activeCol, setActiveCol] = useState<Status | null>(null);
   const [dragVisual, setDragVisual] = useState<DragVisual | null>(null);
 
-  const { setRef, rects } = useColumnRects();
+  const { setRef, rects, measure } = useColumnRects();
 
   // Optimistisk flytt i cachen
   const moveOptimistic = useCallback(
@@ -334,6 +345,9 @@ export default function TrackBoardClient({ track }: { track: Track }) {
 
   // --- Handlers ---
   function handleDragStart(evt: DragStartEvent) {
+    // Säkerställ giltiga rects innan vi använder dem
+    measure();
+
     const orderNumber = (evt.active.data?.current as any)?.orderNumber as string | undefined;
     if (!orderNumber) return;
     const r = findRow(orderNumber);
@@ -344,6 +358,9 @@ export default function TrackBoardClient({ track }: { track: Track }) {
   }
 
   function handleDragMove(evt: DragMoveEvent) {
+    // Om något saknas (t.ex. första draget direkt efter sidstart), mät nu
+    if (Object.values(rects).some((v) => !v)) measure();
+
     const rectActive = (evt.active?.rect?.current?.translated || evt.active?.rect?.current?.initial) as DOMRect | undefined;
     updateDragVisualFromRects(rectActive ?? null);
   }
@@ -569,16 +586,15 @@ function OrderCardUI({
 function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null }) {
   const base = TRACK_STATUS_COLORS[row.status] ?? "bg-slate-50 text-slate-900 border-slate-200";
 
-  // 🔧 Glow-tweaks (dina värden)
+  // 🔧 Glow-tweaks
   const GLOW_RADIUS = 7;   // px
-  const GLOW_STRONG = 1;   // alpha (clamp 0..1)
-  const GLOW_SOFT   = 3;   // önskad "styrka": vi tolkar som alpha->clamp + större blur
+  const GLOW_STRONG = 1;   // alpha (0..1)
+  const GLOW_SOFT   = 3;   // önskad “styrka”: tolkas som större blur, alpha clampas till 1
 
   // inre blur (för själva gradienten)
-  const INNER_BLUR_PX = 8;              // hur mycket gradienten ska blurra inuti kortet
-  const INNER_BLUR_OPACITY = 0.65;      // synlighet av det blurrade lagret
+  const INNER_BLUR_PX = 8;
+  const INNER_BLUR_OPACITY = 0.65;
 
-  // Hjälpare för rgba
   const hexToRgba = (hex: string, alpha = 1) => {
     const m = hex.replace("#", "");
     const n = m.length === 3 ? m.split("").map(c => c + c).join("") : m;
@@ -587,11 +603,8 @@ function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null
     return `rgba(${r}, ${g}, ${b}, ${alpha})`;
   };
 
-  // clamp:a alfas (CSS kräver 0..1)
   const STRONG_A = Math.max(0, Math.min(1, GLOW_STRONG));
-  const SOFT_A   = Math.max(0, Math.min(1, GLOW_SOFT));  // din 3 -> 1 (max)
-
-  // lite större mjuk-glow än stark-glow (så 3 “känns” kraftigare)
+  const SOFT_A   = Math.max(0, Math.min(1, GLOW_SOFT)); // 3 -> 1 (max)
   const SOFT_RADIUS = GLOW_RADIUS * 1.8;
 
   let baseGradient = "";   // skarp gradient (grundlager)
@@ -623,7 +636,6 @@ function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null
     blurGradient = baseGradient;
   }
 
-  // bygg glow-filter
   let glowFilter = "";
   if (visual?.kind === "single") {
     const c = visual.color;
@@ -640,14 +652,11 @@ function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null
     ].join(" ");
   }
 
-  // container måste vara relative för overlay-lagret
   return (
     <div
       className={`relative rounded-lg border p-3 shadow-lg pointer-events-none ${base}`}
       style={{
-        // skarp gradient som grund
         background: baseGradient || undefined,
-        // yttre glow
         filter: glowFilter || undefined,
         boxShadow: "0 0 0 1px rgba(0,0,0,0.04)",
         overflow: "hidden",

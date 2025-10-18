@@ -6,7 +6,25 @@ import Link from "next/link";
 
 
 /* -------------------- Typer -------------------- */
-type Customer = { customerNumber: string; name: string; organisationNumber?: string; city?: string };
+type Customer = {
+  customerNumber: string;
+  name: string;
+  organisationNumber?: string;
+  city?: string;
+  email?: string;
+  phone1?: string;
+  invoiceName?: string;
+  invoiceAddress1?: string;
+  invoiceAddress2?: string;
+  invoiceZip?: string;
+  invoiceCity?: string;
+  deliveryName?: string;
+  deliveryStreet?: string;
+  deliveryAddress?: string;
+  deliveryZip?: string;
+  deliveryCity?: string;
+  priceList?: string;
+};
 type Article  = { articleNumber: string; description: string; salesPrice?: number; unit?: string };
 type Row      = { articleNumber?: string; description?: string; OrderedQuantity: number; price: number; unit?: string };
 
@@ -117,7 +135,7 @@ function CollapsibleSection({
 
 
 
-export default function NNewOrderClient() {
+export default function NNewOrderClient({ defaultOurReference = "" }: { defaultOurReference?: string }) {
   // Basfält
   const [title, setTitle] = useState("");
   const [customerName, setCustomerName] = useState("");
@@ -126,7 +144,7 @@ export default function NNewOrderClient() {
   const [orderDate, setOrderDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [deliveryDate, setDeliveryDate] = useState<string>("");
 
-  const [ourReference, setOurReference] = useState("");
+  const [ourReference, setOurReference] = useState(() => defaultOurReference ?? "");
   const [yourReference, setYourReference] = useState("");
 
   // Prislista (dropdown)
@@ -168,6 +186,10 @@ export default function NNewOrderClient() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [customerQuery, setCustomerQuery] = useState("");
   const [customerNumber, setCustomerNumber] = useState<string>("");
+  const selectedCustomer = useMemo(
+    () => customers.find((c) => c.customerNumber === customerNumber),
+    [customers, customerNumber]
+  );
 
   const [articles, setArticles] = useState<Article[]>([]);
   const [articleQuery, setArticleQuery] = useState("");
@@ -179,19 +201,19 @@ export default function NNewOrderClient() {
   const [submitting, setSubmitting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
 
-  /* -------------------- Datahämtning -------------------- */
+  /* -------------------- Datahamtning -------------------- */
   useEffect(() => {
     // kunder & artiklar
-    fetch(`/api/fortnox/customers?q=${encodeURIComponent(customerQuery)}`)
+    fetch("/api/fortnox/customers")
       .then((r) => r.json())
       .then((j) => setCustomers(j.customers ?? []))
       .catch(() => {});
-    fetch(`/api/fortnox/articles?q=${encodeURIComponent(articleQuery)}`)
+    fetch("/api/fortnox/articles")
       .then((r) => r.json())
       .then((j) => setArticles(j.articles ?? []))
       .catch(() => {});
 
-    // leveranssätt + prislistor (tolerera olika nycklar i svaret)
+    // leveranss?tt + prislistor (tolerera olika nycklar i svaret)
     fetch("/api/fortnox/wayofdeliveries")
       .then((r) => r.json())
       .then((j) => setWayOfDeliveryOptions(j.wayOfDeliveries ?? j.items ?? []))
@@ -201,6 +223,29 @@ export default function NNewOrderClient() {
       .then((j) => setPriceListOptions(j.priceLists ?? j.items ?? []))
       .catch(() => {});
   }, []); // eslint-disable-line
+
+  // Auto-fill kunduppgifter nar kund valjs
+  useEffect(() => {
+    if (!selectedCustomer) return;
+
+    setCustomerName(selectedCustomer.name ?? "");
+    setInvoiceName(selectedCustomer.invoiceName ?? selectedCustomer.name ?? "");
+    setInvoiceAddress1(selectedCustomer.invoiceAddress1 ?? "");
+    setInvoiceAddress2(selectedCustomer.invoiceAddress2 ?? "");
+    setInvoiceZip(selectedCustomer.invoiceZip ?? "");
+    setInvoiceCity(selectedCustomer.invoiceCity ?? selectedCustomer.city ?? "");
+    setOrganisationNumber(selectedCustomer.organisationNumber ?? "");
+    setPhone1(selectedCustomer.phone1 ?? "");
+    setEmail(selectedCustomer.email ?? "");
+    setDeliveryName(selectedCustomer.deliveryName ?? selectedCustomer.name ?? "");
+    setDeliveryStreet(selectedCustomer.deliveryStreet ?? "");
+    setDeliveryAddress(selectedCustomer.deliveryAddress ?? "");
+    setDeliveryZip(selectedCustomer.deliveryZip ?? "");
+    setDeliveryCity(selectedCustomer.deliveryCity ?? selectedCustomer.city ?? "");
+    if (selectedCustomer.priceList) {
+      setPriceList(selectedCustomer.priceList);
+    }
+  }, [selectedCustomer]);
 
   // Autosätt första alternativet som default (om inget valt)
   useEffect(() => {
@@ -215,12 +260,20 @@ export default function NNewOrderClient() {
   }, [priceListOptions, priceList]);
 
   const searchCustomers = async () => {
-    const res = await fetch(`/api/fortnox/customers?q=${encodeURIComponent(customerQuery)}`);
+    const query = customerQuery.trim();
+    const url = query
+      ? `/api/fortnox/customers?q=${encodeURIComponent(query)}`
+      : "/api/fortnox/customers";
+    const res = await fetch(url);
     const j = await res.json();
     setCustomers(j.customers ?? []);
   };
   const searchArticles = async () => {
-    const res = await fetch(`/api/fortnox/articles?q=${encodeURIComponent(articleQuery)}`);
+    const query = articleQuery.trim();
+    const url = query
+      ? `/api/fortnox/articles?articleNumber=${encodeURIComponent(query)}`
+      : "/api/fortnox/articles";
+    const res = await fetch(url);
     const j = await res.json();
     setArticles(j.articles ?? []);
   };
@@ -568,7 +621,7 @@ export default function NNewOrderClient() {
       <div className="border-t px-2 py-2">
         <div className="flex gap-2">
           <TInput
-            placeholder="Sök artikel…"
+            placeholder="Sok artikelnr..."
             value={articleQuery}
             onChange={(e) => setArticleQuery(e.target.value)}
             className="max-w-[300px]"
