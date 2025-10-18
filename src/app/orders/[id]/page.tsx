@@ -1,42 +1,44 @@
 "use client";
+
 import { useEffect, useState } from "react";
+import { motion } from "framer-motion";
 import { useParams } from "next/navigation";
 import { useOrderRealtime } from "@/lib/useOrderRealtime";
+import {
+  STATUS_COLORS,
+  STATUS_DISPLAY,
+  type TrackStatus,
+} from "@/lib/orderStatus";
+import CalendarMount from "@/components/CalendarMount";
+import { APP_TRACKS, TRACK_NAMES, type AppTrack } from "@/lib/tracks";
 
-type TrackType = "A" | "B" | "SHARED";
-type Track = "A" | "B";
+import { OrdinaLogoSpinner } from "@/components/OrdinaLoader";
+import { formatMinutesLabel } from "@/lib/time";
+type TrackType = AppTrack | "SHARED";
+type Track = AppTrack;
 
 type FileItem = {
   id: string;
   filename: string;
-  url: string;                 // signerad URL
-  track: "A" | "B" | "SHARED";
+  url: string;
+  track: AppTrack | "SHARED";
   createdAt: number | string;
-  expiresAt?: number;          // ms-epoch
+  expiresAt?: number;
 };
-
 
 type OrderData = {
   orderNumber: string | number;
   title: string;
   customerName?: string | null;
-  tracks: { track: Track; status: "INKOMMANDE" | "PAGAENDE" | "LEVERANS" | "AVSLUTAD" }[];
+  tracks: { track: Track; status: TrackStatus; timeSpentMinutes: number }[];
   files: FileItem[];
 };
 
-
-
-
-const TRACK_STATUS_COLORS: Record<string, string> = {
-  INKOMMANDE: "bg-amber-100 text-amber-900 border-amber-300",
-  PAGAENDE:   "bg-sky-100 text-sky-900 border-sky-300",
-  LEVERANS:   "bg-purple-100 text-purple-900 border-purple-300",
-  AVSLUTAD:   "bg-emerald-100 text-emerald-900 border-emerald-300",
-};
-
-const TRACK_LABELS: Record<Track, string> = {
-  A: "Ateljé",
-  B: "Verkstad",
+const TRACK_LABELS: Record<AppTrack, string> = {
+  A: TRACK_NAMES.A,
+  B: TRACK_NAMES.B,
+  C: TRACK_NAMES.C,
+  D: TRACK_NAMES.D,
 };
 
 export default function OrderPage() {
@@ -47,6 +49,8 @@ export default function OrderPage() {
   const [file, setFile] = useState<File | null>(null);
   const [track, setTrack] = useState<TrackType>("SHARED");
   const [loading, setLoading] = useState(false);
+
+  const [calendarTrack, setCalendarTrack] = useState<Track>(APP_TRACKS[0]);
 
   async function load() {
     if (!orderId) return;
@@ -67,25 +71,29 @@ export default function OrderPage() {
     }
   }
 
-  useEffect(() => { load(); /* eslint-disable-next-line */ }, [orderId]);
+  useEffect(() => {
+    load();
+  }, [orderId]);
 
-  // Realtid: lägg till fil när event kommer från Pusher (med dubblettskydd)
-useOrderRealtime<FileItem, { id: string }>(
-  orderId,
-  // file:created
-  (incoming) => {
-    setData(prev => {
-      if (!prev) return prev;
-      const already = prev.files.some(f => f.id === incoming.id || f.url === incoming.url);
-      if (already) return prev;
-      return { ...prev, files: [incoming, ...prev.files] };
-    });
-  },
-  // file:deleted
-  ({ id }) => {
-    setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== id) } : prev));
-  }
-);
+  // Realtime file updates
+  useOrderRealtime<FileItem, { id: string }>(
+    orderId,
+    (incoming) => {
+      setData((prev) => {
+        if (!prev) return prev;
+        const already = prev.files.some(
+          (f) => f.id === incoming.id || f.url === incoming.url
+        );
+        if (already) return prev;
+        return { ...prev, files: [incoming, ...prev.files] };
+      });
+    },
+    ({ id }) => {
+      setData((prev) =>
+        prev ? { ...prev, files: prev.files.filter((f) => f.id !== id) } : prev
+      );
+    }
+  );
 
   async function upload(e: React.FormEvent) {
     e.preventDefault();
@@ -95,13 +103,15 @@ useOrderRealtime<FileItem, { id: string }>(
       const fd = new FormData();
       fd.append("file", file);
       fd.append("track", track);
-      const res = await fetch(`/api/orders/${orderId}/files`, { method: "POST", body: fd });
+      const res = await fetch(`/api/orders/${orderId}/files`, {
+        method: "POST",
+        body: fd,
+      });
       if (!res.ok) {
         const msg = await res.text();
         alert(`Uppladdning misslyckades: ${msg}`);
         return;
       }
-      // ❗Ingen optimistisk setData här – låt Pusher-eventet uppdatera listan
       await res.json();
       setFile(null);
     } catch (e) {
@@ -114,20 +124,26 @@ useOrderRealtime<FileItem, { id: string }>(
 
   async function deleteFile(fileId: string, filename: string) {
     if (!orderId) return;
-    if (!confirm(`Är du säker på att du vill ta bort filen "${filename}"? Detta går inte att ångra.`)) return;
-    const res = await fetch(`/api/orders/${orderId}/files/${fileId}`, { method: "DELETE" });
+    if (
+      !confirm(
+        `Är du säker på att du vill ta bort filen "${filename}"? Detta går inte att ångra.`
+      )
+    )
+      return;
+    const res = await fetch(`/api/orders/${orderId}/files/${fileId}`, {
+      method: "DELETE",
+    });
     if (!res.ok) {
       const msg = await res.text();
       alert(`Kunde inte ta bort filen: ${msg}`);
       return;
     }
-setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId) } : prev));
+    setData((prev) =>
+      prev ? { ...prev, files: prev.files.filter((f) => f.id !== fileId) } : prev
+    );
   }
 
-  async function setStatus(
-    t: Track,
-    status: "INKOMMANDE" | "PAGAENDE" | "LEVERANS" | "AVSLUTAD"
-  ) {
+  async function setStatus(t: Track, status: TrackStatus) {
     if (!orderId) return;
     const res = await fetch(`/api/orders/${orderId}/tracks/${t}/status`, {
       method: "POST",
@@ -143,7 +159,15 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
   }
 
   if (err) return <div className="p-6 text-red-600">{err}</div>;
-  if (!data) return <div className="p-6">Laddar…</div>;
+  if (!data)
+    return (
+      <div className="flex min-h-[200px] items-center justify-center p-6">
+        <div className="flex items-center gap-3 text-neutral-600">
+          <OrdinaLogoSpinner size={40} />
+          <span>Laddar order</span>
+        </div>
+      </div>
+    );
 
   return (
     <div className="max-w-4xl mx-auto p-6 space-y-6">
@@ -154,37 +178,59 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
         <p className="text-gray-600">Kund: {data.customerName ?? "-"}</p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        {(["A","B"] as const).map((t) => {
+      {/* Track status cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-4">
+        {APP_TRACKS.map((t) => {
           const trackRow = data.tracks.find((x) => x.track === t);
-          const currentStatus = trackRow?.status as keyof typeof TRACK_STATUS_COLORS | undefined;
+          const currentStatus = trackRow?.status as TrackStatus | undefined;
+          const timeSpent = trackRow?.timeSpentMinutes ?? 0;
+          const timeLabel = formatMinutesLabel(timeSpent);
           return (
-            <div key={t} className="border rounded p-3">
-              <div className="font-semibold mb-2">{TRACK_LABELS[t]}</div>
+            <div key={t} className="border rounded p-3 space-y-3">
+              <div>
+                <div className="font-semibold">{TRACK_LABELS[t]}</div>
 
-              <div className="mb-2 flex items-center gap-2">
-                Status:
-                {currentStatus ? (
-                  <span
-                    className={`px-2 py-1 rounded-full text-xs font-semibold border ${TRACK_STATUS_COLORS[currentStatus]}`}
-                  >
-                    {currentStatus}
-                  </span>
-                ) : (
-                  <span className="font-medium">—</span>
-                )}
+                <div className="mt-2 flex items-center gap-2 text-sm">
+                  <span className="text-gray-600">Status:</span>
+                  {currentStatus ? (
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-semibold border ${STATUS_COLORS[currentStatus]}`}
+                    >
+                      {STATUS_DISPLAY[currentStatus]}
+                    </span>
+                  ) : (
+                    <span className="font-medium text-gray-700">Ingen status</span>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between rounded-lg border border-brand-100 bg-brand-50/70 px-3 py-2">
+                <div className="text-xs font-medium uppercase tracking-wide text-brand-700">
+                  Tid loggad
+                </div>
+                <motion.span
+                  key={`${t}-${timeSpent}`}
+                  initial={{ opacity: 0, y: 4 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ duration: 0.2, ease: "easeOut" }}
+                  className="text-sm font-semibold text-brand-900"
+                >
+                  {timeLabel}
+                </motion.span>
               </div>
 
               <div className="flex flex-wrap gap-2">
-                {(["INKOMMANDE","PAGAENDE","LEVERANS","AVSLUTAD"] as const).map((s) => (
+                {(
+                  ["INKOMMANDE", "PAGAENDE", "LEVERANS", "PALACK", "AVSLUTAD"] as const
+                ).map((s) => (
                   <button
                     key={s}
                     onClick={() => setStatus(t, s)}
                     className={`text-xs border px-2 py-1 rounded transition
-                      ${TRACK_STATUS_COLORS[s] ?? "hover:bg-slate-100"}
-                      ${s === currentStatus ? "ring-2 ring-black/10" : ""}`}
+                      ${STATUS_COLORS[s]}
+                      ${s === currentStatus ? "ring-2 ring-black/10" : "hover:bg-neutral-100"}`}
                   >
-                    {s}
+                    {STATUS_DISPLAY[s]}
                   </button>
                 ))}
               </div>
@@ -193,7 +239,7 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
         })}
       </div>
 
-      {/* Uppladdning */}
+      {/* Upload */}
       <form onSubmit={upload} className="border rounded p-4 space-y-3">
         <div className="font-semibold">Ladda upp fil</div>
 
@@ -205,11 +251,10 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
             className="hidden"
           />
 
-        <button
+          <button
             type="button"
-            onClick={() => document.getElementById("fileInput")?.click()}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700
-                       focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            onClick={() => (document.getElementById("fileInput") as HTMLInputElement)?.click()}
+            className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 focus:outline-none focus:ring-2 focus:ring-brand-400 transition"
           >
             {file ? `Vald: ${file.name}` : "Välj fil"}
           </button>
@@ -220,22 +265,31 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
             className="border p-2 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-400"
           >
             <option value="SHARED">Delad</option>
-            <option value="A">Ateljé</option>
-            <option value="B">Verkstad</option>
+            {APP_TRACKS.map((t) => (
+              <option key={t} value={t}>
+                {TRACK_LABELS[t]}
+              </option>
+            ))}
           </select>
 
           <button
             type="submit"
             disabled={loading || !file}
-            className="px-4 py-2 rounded-lg bg-emerald-600 text-white hover:bg-emerald-700
-                       disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-emerald-400 transition"
+            className="px-4 py-2 rounded-lg bg-brand-600 text-white hover:bg-brand-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-brand-400 transition"
           >
-            {loading ? "Laddar…" : "Ladda upp"}
+            {loading ? (
+              <div className="flex items-center gap-2">
+                <OrdinaLogoSpinner size={20} />
+                <span>Laddar</span>
+              </div>
+            ) : (
+              "Ladda upp"
+            )}
           </button>
         </div>
       </form>
 
-      {/* Filer */}
+      {/* Files */}
       <div className="grid md:grid-cols-3 gap-4">
         {data.files.length === 0 && (
           <div className="text-gray-600">Inga filer än.</div>
@@ -256,7 +310,7 @@ setData(prev => (prev ? { ...prev, files: prev.files.filter(f => f.id !== fileId
             </div>
             <button
               onClick={() => deleteFile(f.id, f.filename)}
-              className="mt-2 text-xs rounded border px-2 py-1 bg-rose-50 border-rose-300 text-rose-800 hover:bg-rose-100"
+              className="mt-2 text-xs rounded border px-2 py-1 bg-error-50 border-error-300 text-error-800 hover:bg-error-100"
             >
               Ta bort
             </button>

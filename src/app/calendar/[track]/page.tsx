@@ -1,12 +1,17 @@
-import CalendarClient from "../CalendarClient";
+// src/app/calendar/[track]/page.tsx
 import { notFound } from "next/navigation";
+import CalendarClient from "../CalendarClient"; // justera sökvägen vid behov
+import { normalizeTrack } from "@/lib/tracks";
 
-export const revalidate = 0;
+export default async function CalendarPage({
+  params,
+}: {
+  params: Promise<{ track: string }>;
+}) {
+  const { track } = await params;               // vänta in params
+  const normalized = normalizeTrack(track);
 
-export default async function CalendarPage(
-  { params }: { params: { track: string } }
-) {
-  const t = (params.track || "").toUpperCase();
-  if (t !== "A" && t !== "B") notFound();
-  return <CalendarClient track={t as "A" | "B"} />;
+  if (!normalized) notFound();
+
+  return <CalendarClient track={normalized} />;
 }

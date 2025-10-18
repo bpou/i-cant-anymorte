@@ -13,10 +13,10 @@ export default async function HomePage() {
       <div className="min-h-[70vh] grid place-items-center p-6">
         <div className="max-w-lg text-center">
           <h1 className="text-2xl font-semibold">Välkommen till Ordina</h1>
-          <p className="mt-2 text-slate-600">Logga in för att skapa och följa upp ordrar.</p>
+          <p className="mt-2 text-neutral-600">Logga in för att skapa och följa upp ordrar.</p>
           <a
             href="/login"
-            className="mt-6 inline-flex rounded-xl bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
+            className="mt-6 inline-flex rounded-xl bg-brand-600 px-4 py-2 text-white hover:bg-brand-700"
           >
             Logga in
           </a>

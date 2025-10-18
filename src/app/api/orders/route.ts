@@ -1,7 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/db";
+import { prisma } from "@/lib/prisma";
+import { getServerSession } from "next-auth";
+import { authOptions } from "@/lib/auth";
 import { Track } from "@prisma/client";
-import { createFortnoxOrder } from "@/lib/fortnox";
+import { createFortnoxOrder, uploadFortnoxOrderConfirmation } from "@/lib/fortnox";
 
 // ====== Planerings-hjälpare (öppettider 07–16) ======
 const WORK_START_HOUR = 7;   // 07:00
@@ -77,7 +79,18 @@ async function findEarliestSlot(track: "A" | "B", minutes: number) {
   return null;
 }
 
-// ====== GET – oförändrad ======
+// ====== Safe body parser (fixar "Unexpected end of JSON input") ======
+async function parseJsonBody(req: NextRequest): Promise<any> {
+  const text = await req.text();
+  if (!text || !text.trim()) return {};
+  try {
+    return JSON.parse(text);
+  } catch (e: any) {
+    throw new Error(`Invalid JSON body. ${e?.message ?? ""}`);
+  }
+}
+
+// ====== GET – oförändrad logik ======
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const rawTrack = searchParams.get("track");
@@ -106,7 +119,7 @@ export async function GET(req: NextRequest) {
 
   const orders = await prisma.order.findMany({
     where,
-    include: { tracks: true, fortnox: true, events: true, files: true },
+    include: { tracks: true, fortnox: true, events: true, files: true, createdBy: true },
     orderBy: { createdAt: "desc" },
   });
 
@@ -115,14 +128,29 @@ export async function GET(req: NextRequest) {
 
 // ====== POST – Fortnox först, använd deras DocumentNumber som orderNumber ======
 export async function POST(req: NextRequest) {
-  const body = await req.json();
+  let body: any;
+  try {
+    body = await parseJsonBody(req); // ✅ robust mot tom/icke-JSON
+  } catch (err: any) {
+    return NextResponse.json({ error: err.message || "Invalid JSON" }, { status: 400 });
+  }
+
+  const session = await getServerSession(authOptions);
+  const sessionUser = session?.user as { id?: string | null; name?: string | null; email?: string | null } | undefined;
+  const createdById = typeof sessionUser?.id === "string" ? sessionUser.id : null;
+  const createdByName = (() => {
+    const name = typeof sessionUser?.name === "string" ? sessionUser.name.trim() : "";
+    if (name) return name;
+    const email = typeof sessionUser?.email === "string" ? sessionUser.email.trim() : "";
+    return email || null;
+  })();
 
   let {
     // gamla fält (behåller stöd)
     title, customerName, dueDate, deliveryMethod, deliveryAddress,
     deliveryName, deliveryAddress2, deliveryZip, deliveryCity, deliveryCountry,
 
-    tracks, plannedA, plannedB, colorA = "#16a34a", colorB = "#ec4899",
+    tracks, colorA = "#16a34a", colorB = "#ec4899",
 
     // planering
     autoSchedule = true,
@@ -192,14 +220,72 @@ export async function POST(req: NextRequest) {
     ];
   }
 
+
+
+  type Slot = { start: Date; end: Date };
+
+  const parseSlot = (raw: { start?: string; end?: string } | undefined): Slot | null => {
+    if (!raw?.start || !raw?.end) return null;
+    const start = new Date(raw.start);
+    const end = new Date(raw.end);
+    if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime()) || end <= start) {
+      return null;
+    }
+    return { start, end };
+  };
+
+  const minutesOr = (value: unknown, fallback: number) => {
+    const num = Number(value);
+    if (!Number.isFinite(num) || num <= 0) return fallback;
+    const rounded = Math.round(num);
+    const clamped = Math.min(Math.max(rounded, 15), 8 * 60); // mellan 15 min och 8 h
+    return clamped;
+  };
+
+  let scheduleA: Slot | null = null;
+  let scheduleB: Slot | null = null;
+
+  if (autoSchedule) {
+    if (tracks.includes("A")) {
+      const slot = await findEarliestSlot("A", minutesOr(estimateA, 60));
+      if (!slot) {
+        return NextResponse.json(
+          { error: "Kunde inte hitta ledig tid for spar A. Valj tid manuellt." },
+          { status: 409 }
+        );
+      }
+      scheduleA = slot;
+    }
+    if (tracks.includes("B")) {
+      const slot = await findEarliestSlot("B", minutesOr(estimateB, 60));
+      if (!slot) {
+        return NextResponse.json(
+          { error: "Kunde inte hitta ledig tid for spar B. Valj tid manuellt." },
+          { status: 409 }
+        );
+      }
+      scheduleB = slot;
+    }
+  } else {
+    scheduleA = tracks.includes("A") ? parseSlot(manualA) : null;
+    scheduleB = tracks.includes("B") ? parseSlot(manualB) : null;
+
+    if (tracks.includes("A") && !scheduleA) {
+      return NextResponse.json({ error: "Start/slut saknas for spar A." }, { status: 400 });
+    }
+    if (tracks.includes("B") && !scheduleB) {
+      return NextResponse.json({ error: "Start/slut saknas for spar B." }, { status: 400 });
+    }
+  }
+
   // ---------------------------
   // 2) Normalisera leveransadress från gamla + nya fält
   // ---------------------------
   const normDelivery = {
     name: (f.DeliveryName ?? deliveryName ?? customerName ?? title) || "",
-    // deliveryStreet från nya sidan vinner över gamla deliveryAddress
+    // deliveryStreet (nytt) vinner över gamla deliveryAddress
     address1: (f.DeliveryAddress1 ?? body.deliveryStreet ?? deliveryAddress ?? "").toString(),
-    address2: (f.DeliveryAddress2 ?? deliveryAddress2 ?? body.deliveryAddress ?? "").toString(), // fri textfält
+    address2: (f.DeliveryAddress2 ?? deliveryAddress2 ?? body.deliveryAddress ?? "").toString(), // fri text
     zip: (f.DeliveryZipCode ?? deliveryZip ?? "").toString(),
     city: (f.DeliveryCity ?? deliveryCity ?? "").toString(),
     way: f.WayOfDelivery ?? body.wayOfDelivery ?? deliveryMethod,
@@ -266,18 +352,69 @@ export async function POST(req: NextRequest) {
   }
 
   // ---------------------------
-  // 5) Spara lokalt (oförändrat i stort)
+  // 5) Spara lokalt
   // ---------------------------
   const orderNumber = fortnoxDoc;
+
+  const eventTitleBase = title || `Order ${orderNumber}`;
+  const eventTitle = customerName ? `${eventTitleBase} - ${customerName}` : eventTitleBase;
+
+  const locationParts: string[] = [];
+  if (body.deliveryName) {
+    locationParts.push(String(body.deliveryName));
+  }
+  const primaryAddress = body.deliveryStreet ?? deliveryAddress ?? body.deliveryAddress;
+  if (primaryAddress) {
+    locationParts.push(String(primaryAddress));
+  }
+  const secondaryAddress = body.deliveryAddress2 ?? deliveryAddress2;
+  if (secondaryAddress) {
+    locationParts.push(String(secondaryAddress));
+  }
+  const zipCity = [body.deliveryZip ?? deliveryZip, body.deliveryCity ?? deliveryCity]
+    .filter(Boolean)
+    .join(" ");
+  if (zipCity) {
+    locationParts.push(zipCity);
+  }
+  const eventLocation = Array.from(new Set(locationParts.map((p) => p.trim()).filter(Boolean))).join(", ");
+
+  const calendarEventsData = [
+    ...(scheduleA
+      ? [
+          {
+            track: Track.A,
+            start: scheduleA.start,
+            end: scheduleA.end,
+            title: eventTitle,
+            notes: eventLocation || null,
+          },
+        ]
+      : []),
+    ...(scheduleB
+      ? [
+          {
+            track: Track.B,
+            start: scheduleB.start,
+            end: scheduleB.end,
+            title: eventTitle,
+            notes: eventLocation || null,
+          },
+        ]
+      : []),
+  ];
+
 
   const order = await prisma.order.create({
     data: {
       orderNumber,
       title,
       customerName,
-      dueDate: dueDate ? new Date(dueDate) : null,
+      dueDate: toDateOrNull(dueDate),
       deliveryMethod,
-      deliveryAddress, // din egna sammanslagna adress lokalt
+      deliveryAddress: eventLocation || deliveryAddress, // samla adress i klartext
+      createdById,
+      createdByName: createdByName ?? null,
       tracks: {
         create: [
           ...(tracks.includes("A")
@@ -285,16 +422,8 @@ export async function POST(req: NextRequest) {
                 {
                   track: Track.A,
                   colorHex: colorA,
-                  plannedStartAt: manualA?.start
-                    ? new Date(manualA.start)
-                    : plannedA?.start
-                    ? new Date(plannedA.start)
-                    : null,
-                  plannedEndAt: manualA?.end
-                    ? new Date(manualA.end)
-                    : plannedA?.end
-                    ? new Date(plannedA?.end)
-                    : null,
+                  plannedStartAt: scheduleA?.start ?? null,
+                  plannedEndAt: scheduleA?.end ?? null,
                 },
               ]
             : []),
@@ -303,25 +432,18 @@ export async function POST(req: NextRequest) {
                 {
                   track: Track.B,
                   colorHex: colorB,
-                  plannedStartAt: manualB?.start
-                    ? new Date(manualB.start)
-                    : plannedB?.start
-                    ? new Date(plannedB.start)
-                    : null,
-                  plannedEndAt: manualB?.end
-                    ? new Date(manualB.end)
-                    : plannedB?.end
-                    ? new Date(plannedB?.end)
-                    : null,
+                  plannedStartAt: scheduleB?.start ?? null,
+                  plannedEndAt: scheduleB?.end ?? null,
                 },
               ]
             : []),
         ],
       },
+      ...(calendarEventsData.length ? { events: { create: calendarEventsData } } : {}),
     },
   });
 
-  // länk-tabell (valfritt)
+  // Länktabell (valfritt)
   try {
     await prisma.fortnoxOrderLink.create({
       data: { orderId: order.orderNumber, documentNumber: fortnoxDoc },
@@ -330,7 +452,35 @@ export async function POST(req: NextRequest) {
     // svälj tyst – tabellen kan saknas i vissa miljöer
   }
 
-  // (valfritt) autoschema – din befintliga logik kan användas här
+  // ---------------------------
+  // 6) Hämta & ladda upp PDF direkt (robust helper) – svälj fel
+  // ---------------------------
+  let fileKey: string | undefined;
+  let fileId: string | undefined;
+  try {
+    const uploaded = await uploadFortnoxOrderConfirmation(fortnoxDoc, tenantId);
+    // helper kan returnera { key } eller { key, fileId } beroende på version
+    fileKey = (uploaded as any)?.key;
+    fileId = (uploaded as any)?.fileId;
+  } catch (e) {
+    console.warn("Fortnox PDF sync misslyckades:", e);
+  }
 
-  return NextResponse.json({ ok: true, order, fortnox: { documentNumber: fortnoxDoc } }, { status: 200 });
+  return NextResponse.json(
+    {
+      ok: true,
+      order,
+      fortnox: { documentNumber: fortnoxDoc },
+      file: fileKey ? { key: fileKey, id: fileId ?? null } : null,
+      schedule: {
+        A: scheduleA
+          ? { start: scheduleA.start.toISOString(), end: scheduleA.end.toISOString() }
+          : null,
+        B: scheduleB
+          ? { start: scheduleB.start.toISOString(), end: scheduleB.end.toISOString() }
+          : null,
+      },
+    },
+    { status: 200 }
+  );
 }

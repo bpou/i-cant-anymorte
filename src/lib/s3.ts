@@ -21,6 +21,21 @@ export const s3 = new S3Client({
   ...(ENDPOINT ? { endpoint: ENDPOINT, forcePathStyle: true } : {}),
 });
 
+export function resolveS3Key(keyOrUrl: string) {
+  if (!keyOrUrl) return "";
+  try {
+    const url = new URL(keyOrUrl);
+    return decodeURIComponent(url.pathname.replace(/^\/+/, ""));
+  } catch {
+    const trimmed = keyOrUrl.trim();
+    try {
+      return decodeURIComponent(trimmed.replace(/^\/+/, ""));
+    } catch {
+      return trimmed.replace(/^\/+/, "");
+    }
+  }
+}
+
 export async function s3UploadObject(opts: {
   key: string;
   body: Buffer;
@@ -38,10 +53,17 @@ export async function s3UploadObject(opts: {
 }
 
 export async function s3DeleteObject(key: string) {
-  await s3.send(new DeleteObjectCommand({ Bucket: BUCKET, Key: key }));
+  await s3.send(
+    new DeleteObjectCommand({ Bucket: BUCKET, Key: resolveS3Key(key) })
+  );
 }
 
+
 export async function s3PresignGetUrl(key: string, expiresInSec = 600) {
-  const cmd = new GetObjectCommand({ Bucket: BUCKET, Key: key });
+  const cmd = new GetObjectCommand({
+    Bucket: BUCKET,
+    Key: resolveS3Key(key),
+  });
   return getSignedUrl(s3, cmd, { expiresIn: expiresInSec });
 }
+

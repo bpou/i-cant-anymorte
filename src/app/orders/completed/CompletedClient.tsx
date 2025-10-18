@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { OrdinaLogoSpinner } from "@/components/OrdinaLoader";
 
 type OrderRow = {
   orderNumber: string;
@@ -60,7 +61,7 @@ export default function CompletedClient() {
         body: JSON.stringify({ orderNumbers: selectedIds }),
       });
       if (r.ok) {
-        // Ta bort de som bekräftats från listan (de blir “osynliga”)
+        // Ta bort de som bekräftats från listan (de blir "osynliga")
         setOrders(prev => prev.filter(o => !selectedIds.includes(o.orderNumber)));
         setSelected({});
       } else {
@@ -75,8 +76,8 @@ export default function CompletedClient() {
     <div className="p-6 space-y-4">
       <div>
         <h1 className="text-xl font-semibold">Avslutade ordrar</h1>
-        <p className="text-slate-600 text-sm">
-          Visar ordrar där alla avdelningar markerat <em>Avslutad</em>. Välj och klicka “Bekräfta fakturering” för att arkivera dem.
+        <p className="text-neutral-600 text-sm">
+          Visar ordrar där alla avdelningar markerat <em>Avslutad</em>. Välj och klicka "Bekräfta fakturering" för att arkivera dem.
         </p>
       </div>
 
@@ -91,15 +92,22 @@ export default function CompletedClient() {
 
         <button
           onClick={confirmBilling}
-          className={`rounded-lg px-3 py-2 text-sm text-white ${someSelected && !busy ? "bg-emerald-600 hover:bg-emerald-700" : "bg-slate-300 cursor-not-allowed"}`}
+          className={`rounded-lg px-3 py-2 text-sm text-white ${someSelected && !busy ? "bg-brand-600 hover:bg-brand-700" : "bg-neutral-300 cursor-not-allowed"}`}
           disabled={!someSelected || busy}
         >
-          {busy ? "Bekräftar…" : "Bekräfta fakturering"}
+          {busy ? (
+            <div className="flex items-center gap-2">
+              <OrdinaLogoSpinner size={18} />
+              <span>Bekräftar…</span>
+            </div>
+          ) : (
+            "Bekräfta fakturering"
+          )}
         </button>
       </div>
 
       <div className="rounded-xl border bg-white overflow-hidden">
-        <div className="grid grid-cols-12 px-4 py-2 text-xs font-medium text-slate-600 border-b">
+        <div className="grid grid-cols-12 px-4 py-2 text-xs font-medium text-neutral-600 border-b">
           <div className="col-span-1">
             <input
               type="checkbox"
@@ -114,15 +122,20 @@ export default function CompletedClient() {
           <div className="col-span-1 text-right">Uppdaterad</div>
         </div>
 
-        {loading && <div className="px-4 py-3 text-slate-500">Laddar…</div>}
+        {loading && (
+          <div className="flex items-center gap-2 px-4 py-3 text-neutral-500">
+            <OrdinaLogoSpinner size={24} />
+            <span>Laddar ordrar</span>
+          </div>
+        )}
 
         {!loading && orders.length === 0 && (
-          <div className="px-4 py-3 text-slate-500">Inga avslutade ordrar att visa.</div>
+          <div className="px-4 py-3 text-neutral-500">Inga avslutade ordrar att visa.</div>
         )}
 
         {!loading &&
           orders.map((o) => (
-            <div key={o.orderNumber} className="grid grid-cols-12 px-4 py-3 border-t items-center hover:bg-slate-50">
+            <div key={o.orderNumber} className="grid grid-cols-12 px-4 py-3 border-t items-center hover:bg-neutral-50">
               <div className="col-span-1">
                 <input
                   type="checkbox"
@@ -134,7 +147,7 @@ export default function CompletedClient() {
               <div className="col-span-3 font-medium">#{o.orderNumber}</div>
               <div className="col-span-4 truncate">{o.title}</div>
               <div className="col-span-3 truncate">{o.customerName ?? "—"}</div>
-              <div className="col-span-1 text-right text-xs text-slate-500">
+              <div className="col-span-1 text-right text-xs text-neutral-500">
                 {new Date(o.updatedAt).toLocaleDateString("sv-SE")}
               </div>
             </div>

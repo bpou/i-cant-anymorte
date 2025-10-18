@@ -4,6 +4,8 @@ import useSWR from "swr";
 import Link from "next/link";
 import { useCallback, useLayoutEffect, useRef, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
+import type { AppTrack } from "@/lib/tracks";
+import { STATUS_COLOR_PARTS } from "@/lib/orderStatus";
 import {
   DndContext,
   useDraggable,
@@ -23,8 +25,6 @@ import {
 // ============================
 const STATI = ["INKOMMANDE", "PAGAENDE", "LEVERANS", "AVSLUTAD"] as const;
 type Status = typeof STATI[number];
-type Track = "A" | "B";
-
 function isStatus(v: unknown): v is Status {
   return typeof v === "string" && (STATI as readonly string[]).includes(v);
 }
@@ -48,26 +48,31 @@ type DragVisual =
 
 type Over = { status: Status; rect: DOMRect };
 
+function statusClasses(status: Status) {
+  const parts = STATUS_COLOR_PARTS[status];
+  return `${parts.bgClass} ${parts.textClass} ${parts.borderClass}`;
+}
+
 const TRACK_STATUS_COLORS: Record<Status, string> = {
-  INKOMMANDE: "bg-amber-100 text-amber-900 border-amber-200",
-  PAGAENDE: "bg-sky-100 text-sky-900 border-sky-200",
-  LEVERANS: "bg-purple-100 text-purple-900 border-purple-200",
-  AVSLUTAD: "bg-emerald-100 text-emerald-900 border-emerald-200",
+  INKOMMANDE: statusClasses("INKOMMANDE"),
+  PAGAENDE: statusClasses("PAGAENDE"),
+  LEVERANS: statusClasses("LEVERANS"),
+  AVSLUTAD: statusClasses("AVSLUTAD"),
 };
 
 const TRACK_STATUS_BTN: Record<Status, string> = {
-  INKOMMANDE: "bg-amber-100 text-amber-900 border-amber-300 hover:bg-amber-200",
-  PAGAENDE: "bg-sky-100 text-sky-900 border-sky-300 hover:bg-sky-200",
-  LEVERANS: "bg-purple-100 text-purple-900 border-purple-300 hover:bg-purple-200",
-  AVSLUTAD: "bg-emerald-100 text-emerald-900 border-emerald-300 hover:bg-emerald-200",
+  INKOMMANDE: `${statusClasses("INKOMMANDE")} hover:opacity-90`,
+  PAGAENDE: `${statusClasses("PAGAENDE")} hover:opacity-90`,
+  LEVERANS: `${statusClasses("LEVERANS")} hover:opacity-90`,
+  AVSLUTAD: `${statusClasses("AVSLUTAD")} hover:opacity-90`,
 };
 
-// Hex-färger (matchar Tailwind *-100) – används för gradient
+// Hex colors from status palette - used for gradient
 const STATUS_BG_HEX: Record<Status, string> = {
-  INKOMMANDE: "#FEF3C7", // amber-100
-  PAGAENDE: "#E0F2FE", // sky-100
-  LEVERANS: "#F3E8FF", // purple-100
-  AVSLUTAD: "#D1FAE5", // emerald-100
+  INKOMMANDE: STATUS_COLOR_PARTS.INKOMMANDE.bgHex,
+  PAGAENDE: STATUS_COLOR_PARTS.PAGAENDE.bgHex,
+  LEVERANS: STATUS_COLOR_PARTS.LEVERANS.bgHex,
+  AVSLUTAD: STATUS_COLOR_PARTS.AVSLUTAD.bgHex,
 };
 
 const fetcher = (url: string) =>
@@ -180,7 +185,7 @@ function useColumnRects() {
 // ============================
 // Huvudkomponent
 // ============================
-export default function TrackBoardClient({ track }: { track: Track }) {
+export default function TrackBoardClient({ track }: { track: AppTrack }) {
   const { data, error, mutate } = useSWR<ApiData>(`/api/orders/track/${track}`, fetcher, {
     refreshInterval: 10_000,
   });
@@ -377,7 +382,7 @@ export default function TrackBoardClient({ track }: { track: Track }) {
 
   if (error)
     return (
-      <div className="p-6 text-rose-600">
+      <div className="p-6 text-error-600">
         Kunde inte ladda: {String(error.message || error)}
       </div>
     );
@@ -386,9 +391,9 @@ export default function TrackBoardClient({ track }: { track: Track }) {
   return (
     <div className="p-4 md:p-6">
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-semibold">Spår {track} – Tavla</h1>
+        <h1 className="text-xl font-semibold">Spår {track} kalender</h1>
         <div className="flex gap-2">
-          <Link href="/orders/new" className="rounded-lg bg-emerald-500 text-white px-3 py-2 text-sm">Ny order</Link>
+          <Link href="/orders/new" className="rounded-lg bg-brand-500 text-white px-3 py-2 text-sm">Ny order</Link>
           <Link href="/orders/overview" className="rounded-lg border px-3 py-2 text-sm">Översikt</Link>
         </div>
       </div>
@@ -520,7 +525,7 @@ function OrderCardUI({
   setStatus: (orderNumber: string, status: Status) => Promise<void> | void;
 }) {
   const cardColor = TRACK_STATUS_COLORS[row.status] ??
-    "bg-slate-50 text-slate-900 border-slate-200";
+    "bg-neutral-50 text-neutral-900 border-neutral-200";
   return (
     <div className={`rounded-lg border p-3 shadow-sm ${cardColor}`}>
       <div className="text-sm font-semibold mb-1">
@@ -528,7 +533,7 @@ function OrderCardUI({
           className="underline decoration-transparent hover:decoration-current"
           href={`/orders/${row.order.orderNumber}`}
         >
-          #{row.order.orderNumber} – {row.order.title}
+          #{row.order.orderNumber} {row.order.title}
         </Link>
       </div>
       <div className="text-xs opacity-80 mb-2">
@@ -553,7 +558,7 @@ function OrderCardUI({
                 onClick={() =>
                   deleteFile(row.order.orderNumber, f.id, f.filename)
                 }
-                className="ml-2 text-rose-700 hover:text-rose-900"
+                className="ml-2 text-error-700 hover:text-error-900"
               >
                 Ta bort
               </button>
@@ -564,7 +569,7 @@ function OrderCardUI({
 
       <div className="flex flex-wrap gap-2">
         {(STATI as readonly Status[]).map((s) => {
-          const base = TRACK_STATUS_BTN[s] ?? "hover:bg-slate-100";
+          const base = TRACK_STATUS_BTN[s] ?? "hover:bg-neutral-100";
           const active = s === row.status ? "ring-2 ring-black/10" : "";
           return (
             <motion.button
@@ -584,12 +589,12 @@ function OrderCardUI({
 }
 
 function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null }) {
-  const base = TRACK_STATUS_COLORS[row.status] ?? "bg-slate-50 text-slate-900 border-slate-200";
+  const base = TRACK_STATUS_COLORS[row.status] ?? "bg-neutral-50 text-neutral-900 border-neutral-200";
 
   // 🔧 Glow-tweaks
   const GLOW_RADIUS = 7;   // px
   const GLOW_STRONG = 1;   // alpha (0..1)
-  const GLOW_SOFT   = 3;   // önskad “styrka”: tolkas som större blur, alpha clampas till 1
+  const GLOW_SOFT   = 3;   // önskad "styrka": tolkas som större blur, alpha clampas till 1
 
   // inre blur (för själva gradienten)
   const INNER_BLUR_PX = 8;
@@ -685,3 +690,8 @@ function OrderCardPreview({ row, visual }: { row: Row; visual: DragVisual | null
     </div>
   );
 }
+
+
+
+
+

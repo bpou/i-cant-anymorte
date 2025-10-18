@@ -1,15 +1,10 @@
-// src/lib/db.ts
-import { PrismaClient } from "@prisma/client";
+import prisma from "./prisma";
 
-declare global {
-  // Gör att vi slipper skapa flera instanser i dev (Next.js hot-reload)
-  var prisma: PrismaClient | undefined;
-}
+/**
+ * Backwards-compatible Prisma client export.
+ * Prefer importing from `@/lib/prisma`, but keep `@/lib/db` alive for legacy paths.
+ */
+export const db = prisma;
+export { prisma };
 
-export const prisma =
-  global.prisma ||
-  new PrismaClient({
-    log: ["query", "error", "warn"], // loggar kan tas bort i produktion
-  });
-
-if (process.env.NODE_ENV !== "production") global.prisma = prisma;
+export default prisma;

@@ -39,7 +39,7 @@ const FEATURE_SETS: Feature[] = [
       "Statuschip som lyfter fram flaskhalsar",
       "Delade filer och kommentarer i samma flöde",
     ],
-    accent: "from-emerald-200/60 to-emerald-400/50",
+    accent: "from-brand-200/60 to-brand-400/50",
   },
   {
     title: "Planering som håller",
@@ -50,7 +50,7 @@ const FEATURE_SETS: Feature[] = [
       "Tidslinje med färger per team och status",
       "Pushnotiser via Pusher när filer läggs till",
     ],
-    accent: "from-sky-200/60 to-sky-400/50",
+    accent: "from-info-200/60 to-info-400/50",
   },
   {
     title: "Trygg fakturering",
@@ -61,7 +61,7 @@ const FEATURE_SETS: Feature[] = [
       "Bekräfta flera ordrar åt gången",
       "Direktlänk tillbaka till Fortnox-dokumentet",
     ],
-    accent: "from-amber-200/60 to-amber-400/50",
+    accent: "from-warning-200/60 to-warning-400/50",
   },
 ];
 
@@ -160,7 +160,7 @@ export default function HomeLandingPage() {
   );
 
   return (
-    <div className="min-h-screen bg-[#f7f3ee] text-slate-900">
+    <div className="min-h-screen bg-gradient-to-b from-brand-50 via-neutral-50 to-white text-neutral-900">
       <main className="relative isolate overflow-hidden">
         {/* Animated green radial gradient layer */}
         <div className="absolute inset-x-0 -top-40 z-0 pointer-events-none transform-gpu blur-3xl">
@@ -171,14 +171,14 @@ export default function HomeLandingPage() {
         <div className="relative z-10">
           <section className="px-4 py-14 sm:px-6 lg:px-12 lg:py-20">
             <div className="mx-auto flex max-w-4xl flex-col items-center text-center gap-6">
-              <div className="inline-flex items-center gap-2 rounded-full border border-emerald-200 bg-white/85 px-4 py-1.5 text-xs font-medium text-emerald-700 shadow-sm sm:text-sm">
+              <div className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-white/85 px-4 py-1.5 text-xs font-medium text-brand-700 shadow-sm sm:text-sm">
                 <span>Ordinas ordersystem</span>
-                <span className="text-slate-500">– byggt för fönster & montage</span>
+                <span className="text-neutral-500">– byggt för fönster & montage</span>
               </div>
               <h1 className="text-3xl font-semibold tracking-tight sm:text-4xl">
                 Håll ihop hela orderresan från offert till montage
               </h1>
-              <p className="max-w-2xl text-base text-slate-600 sm:text-lg">
+              <p className="max-w-2xl text-base text-neutral-600 sm:text-lg">
                 Ordina samlar planering, filer, statusar och Fortnox-koppling i ett mobilvänligt
                 flöde. Sälj, ateljé, verkstad och ekonomi jobbar i samma vy och kunden får besked
                 snabbare.
@@ -186,13 +186,13 @@ export default function HomeLandingPage() {
               <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-center">
                 <Link
                   href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-emerald-600 px-6 text-sm font-semibold text-white shadow-lg shadow-emerald-600/30 transition hover:-translate-y-0.5 hover:bg-emerald-700"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-brand-600 px-6 text-sm font-semibold text-white shadow-lg shadow-brand-600/30 transition hover:-translate-y-0.5 hover:bg-brand-700"
                 >
                   Logga in och börja planera
                 </Link>
                 <Link
                   href="/orders/overview"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-emerald-600/40 px-6 text-sm font-semibold text-emerald-700 transition hover:bg-emerald-50"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-brand-600/40 px-6 text-sm font-semibold text-brand-700 transition hover:bg-brand-50"
                 >
                   Se orderöversikten
                 </Link>
@@ -201,12 +201,12 @@ export default function HomeLandingPage() {
                 {METRICS.map((metric) => (
                   <div
                     key={metric.label}
-                    className="rounded-2xl border border-white/70 bg-white/95 px-5 py-4 text-left shadow-sm shadow-emerald-100"
+                    className="rounded-2xl border border-brand-100/70 bg-white px-5 py-4 text-left shadow-sm shadow-brand-100/60"
                   >
-                    <div className="text-lg font-semibold text-emerald-700 sm:text-xl">
+                    <div className="text-lg font-semibold text-brand-700 sm:text-xl">
                       {metric.label}
                     </div>
-                    <div className="text-xs text-slate-600 sm:text-sm">{metric.note}</div>
+                    <div className="text-xs text-neutral-600 sm:text-sm">{metric.note}</div>
                   </div>
                 ))}
               </div>
@@ -216,7 +216,7 @@ export default function HomeLandingPage() {
           <section className="px-4 pb-16 sm:px-6 lg:px-12 lg:pb-20">
             <div className="mx-auto max-w-6xl space-y-12 lg:space-y-16">
               <div className="grid gap-8 lg:grid-cols-[1.1fr_0.9fr]">
-                <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-xl shadow-slate-200/60 sm:p-8">
+                <div className="rounded-3xl border border-brand-100/60 bg-white p-6 shadow-xl shadow-brand-100/40 sm:p-8">
                   <div className="flex snap-x gap-2 overflow-x-auto pb-2">
                     {FEATURE_SETS.map((feature, index) => {
                       const active = index === activeFeature;
@@ -227,8 +227,8 @@ export default function HomeLandingPage() {
                           onClick={() => setActiveFeature(index)}
                           className={`min-w-[150px] rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:px-4 sm:py-2 sm:text-sm ${
                             active
-                              ? "border-emerald-600 bg-emerald-100 text-emerald-800"
-                              : "border-slate-200 bg-slate-50 text-slate-600 hover:bg-slate-100"
+                              ? "border-brand-600 bg-brand-100 text-brand-800"
+                              : "border-neutral-200 bg-neutral-50 text-neutral-600 hover:bg-neutral-100"
                           }`}
                           aria-pressed={active}
                         >
@@ -239,18 +239,18 @@ export default function HomeLandingPage() {
                   </div>
 
                   <article
-                    className={`mt-6 rounded-3xl border border-slate-200 bg-gradient-to-br ${FEATURE_SETS[activeFeature].accent} p-6 shadow-inner sm:p-8`}
+                    className={`mt-6 rounded-3xl border border-neutral-200 bg-gradient-to-br ${FEATURE_SETS[activeFeature].accent} p-6 shadow-inner sm:p-8`}
                   >
-                    <h2 className="text-xl font-semibold text-slate-900 sm:text-2xl">
+                    <h2 className="text-xl font-semibold text-neutral-900 sm:text-2xl">
                       {FEATURE_SETS[activeFeature].title}
                     </h2>
-                    <p className="mt-3 text-sm text-slate-700 sm:text-base">
+                    <p className="mt-3 text-sm text-neutral-700 sm:text-base">
                       {FEATURE_SETS[activeFeature].description}
                     </p>
-                    <ul className="mt-5 space-y-3 text-sm text-slate-700 sm:mt-6">
+                    <ul className="mt-5 space-y-3 text-sm text-neutral-700 sm:mt-6">
                       {FEATURE_SETS[activeFeature].benefits.map((benefit) => (
                         <li key={benefit} className="flex items-start gap-2">
-                          <span className="mt-1 h-2.5 w-2.5 rounded-full bg-emerald-500" aria-hidden />
+                          <span className="mt-1 h-2.5 w-2.5 rounded-full bg-brand-500" aria-hidden />
                           <span>{benefit}</span>
                         </li>
                       ))}
@@ -259,9 +259,9 @@ export default function HomeLandingPage() {
                 </div>
 
                 <aside className="flex flex-col gap-6">
-                  <div className="rounded-3xl border border-emerald-200 bg-emerald-50/85 p-6 shadow-lg shadow-emerald-100 sm:p-8">
-                    <h3 className="text-lg font-semibold text-emerald-800">Rollbaserad vy</h3>
-                    <p className="mt-2 text-sm text-emerald-900/80">
+                  <div className="rounded-3xl border border-brand-200 bg-brand-50/85 p-6 shadow-lg shadow-brand-100 sm:p-8">
+                    <h3 className="text-lg font-semibold text-brand-800">Rollbaserad vy</h3>
+                    <p className="mt-2 text-sm text-brand-900/80">
                       Välj din roll för att se hur Ordina hjälper just dig. Kortet uppdateras direkt.
                     </p>
                     <div className="mt-4 flex snap-x gap-2 overflow-x-auto pb-1">
@@ -274,8 +274,8 @@ export default function HomeLandingPage() {
                             onClick={() => setActivePersona(solution.key)}
                             className={`min-w-[120px] rounded-full border px-3 py-1.5 text-xs font-semibold transition sm:min-w-[140px] sm:px-4 sm:py-2 ${
                               active
-                                ? "border-emerald-700 bg-emerald-100 text-emerald-900"
-                                : "border-emerald-200 bg-white text-emerald-700 hover:bg-emerald-100"
+                                ? "border-brand-700 bg-brand-100 text-brand-900"
+                                : "border-brand-200 bg-white text-brand-700 hover:bg-brand-100"
                             }`}
                             aria-pressed={active}
                           >
@@ -285,27 +285,27 @@ export default function HomeLandingPage() {
                       })}
                     </div>
 
-                    <div className="mt-5 rounded-2xl border border-emerald-200 bg-white/90 p-5 sm:p-6">
-                      <h4 className="text-lg font-semibold text-emerald-900">{persona.heading}</h4>
-                      <p className="mt-2 text-sm text-emerald-900/80">{persona.body}</p>
-                      <ul className="mt-4 space-y-2 text-sm text-emerald-900/80">
+                    <div className="mt-5 rounded-2xl border border-brand-200 bg-white/90 p-5 sm:p-6">
+                      <h4 className="text-lg font-semibold text-brand-900">{persona.heading}</h4>
+                      <p className="mt-2 text-sm text-brand-900/80">{persona.body}</p>
+                      <ul className="mt-4 space-y-2 text-sm text-brand-900/80">
                         {persona.highlights.map((item) => (
                           <li key={item} className="flex items-start gap-2">
-                            <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                            <span className="mt-1 h-2 w-2 rounded-full bg-brand-500" aria-hidden />
                             <span>{item}</span>
                           </li>
                         ))}
                       </ul>
                       <Link
                         href={persona.link.href}
-                        className="mt-5 inline-flex items-center text-sm font-medium text-emerald-700 underline-offset-4 hover:underline"
+                        className="mt-5 inline-flex items-center text-sm font-medium text-brand-700 underline-offset-4 hover:underline"
                       >
                         {persona.link.label}
                       </Link>
                     </div>
                   </div>
 
-                  <div className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60 sm:p-8">
+                  <div className="rounded-3xl border border-brand-100/60 bg-white p-6 shadow-lg shadow-brand-100/40 sm:p-8">
                     <h3 className="text-lg font-semibold">Hur funkar det i praktiken?</h3>
                     <div className="mt-4 flex flex-col gap-2">
                       {JOURNEY.map((journeyItem) => {
@@ -317,8 +317,8 @@ export default function HomeLandingPage() {
                             onClick={() => setActiveStep(journeyItem.id)}
                             className={`rounded-xl border px-4 py-3 text-left text-sm transition sm:text-base ${
                               active
-                                ? "border-emerald-500 bg-emerald-50 text-emerald-900"
-                                : "border-slate-200 bg-slate-50 text-slate-700 hover:bg-slate-100"
+                                ? "border-brand-500 bg-brand-50 text-brand-900"
+                                : "border-neutral-200 bg-neutral-50 text-neutral-700 hover:bg-neutral-100"
                             }`}
                             aria-pressed={active}
                           >
@@ -328,7 +328,7 @@ export default function HomeLandingPage() {
                         );
                       })}
                     </div>
-                    <p className="mt-4 text-xs uppercase tracking-[0.2em] text-slate-500">
+                    <p className="mt-4 text-xs uppercase tracking-[0.2em] text-neutral-500">
                       {step.title}
                     </p>
                   </div>
@@ -339,21 +339,21 @@ export default function HomeLandingPage() {
                 {SOLUTIONS.map((item) => (
                   <div
                     key={item.key}
-                    className="rounded-3xl border border-slate-200 bg-white p-6 shadow-lg shadow-slate-200/60 transition hover:-translate-y-1 hover:shadow-xl sm:p-8"
+                    className="rounded-3xl border border-brand-100/70 bg-white p-6 shadow-lg shadow-brand-100/40 transition hover:-translate-y-1 hover:shadow-xl sm:p-8"
                   >
                     <h3 className="text-xl font-semibold">{item.heading}</h3>
-                    <p className="mt-3 text-sm text-slate-600">{item.body}</p>
-                    <ul className="mt-4 space-y-2 text-sm text-slate-600">
+                    <p className="mt-3 text-sm text-neutral-600">{item.body}</p>
+                    <ul className="mt-4 space-y-2 text-sm text-neutral-600">
                       {item.highlights.map((point) => (
                         <li key={point} className="flex items-start gap-2">
-                          <span className="mt-1 h-2 w-2 rounded-full bg-emerald-500" aria-hidden />
+                          <span className="mt-1 h-2 w-2 rounded-full bg-brand-500" aria-hidden />
                           <span>{point}</span>
                         </li>
                       ))}
                     </ul>
                     <Link
                       href={item.link.href}
-                      className="mt-6 inline-flex items-center text-sm font-medium text-emerald-700 underline-offset-4 hover:underline"
+                      className="mt-6 inline-flex items-center text-sm font-medium text-brand-700 underline-offset-4 hover:underline"
                     >
                       {item.link.label}
                     </Link>
@@ -361,24 +361,24 @@ export default function HomeLandingPage() {
                 ))}
               </div>
 
-              <div className="rounded-3xl border border-slate-200 bg-white/95 p-6 shadow-lg shadow-slate-200/50 sm:p-8">
+              <div className="rounded-3xl border border-brand-100 bg-white/95 p-6 shadow-lg shadow-brand-100/40 sm:p-8">
                 <h2 className="text-2xl font-semibold">Vanliga frågor</h2>
                 <div className="mt-5 space-y-3">
                   {FAQ_ITEMS.map((item, index) => {
                     const open = openFaq === index;
                     return (
-                      <div key={item.question} className="rounded-2xl border border-slate-200 bg-slate-50">
+                      <div key={item.question} className="rounded-2xl border border-brand-100 bg-brand-50/80">
                         <button
                           type="button"
                           onClick={() => setOpenFaq((prev) => (prev === index ? null : index))}
-                          className="flex w-full items-center justify-between px-4 py-4 text-left text-sm font-medium text-slate-700 sm:px-6"
+                          className="flex w-full items-center justify-between px-4 py-4 text-left text-sm font-medium text-neutral-700 sm:px-6"
                           aria-expanded={open}
                         >
                           <span>{item.question}</span>
-                          <span className="text-xl text-slate-400">{open ? "–" : "+"}</span>
+                          <span className="text-xl text-neutral-400">{open ? "–" : "+"}</span>
                         </button>
                         {open && (
-                          <p className="px-4 pb-4 text-sm text-slate-600 sm:px-6">{item.answer}</p>
+                          <p className="px-4 pb-4 text-sm text-neutral-600 sm:px-6">{item.answer}</p>
                         )}
                       </div>
                     );
@@ -388,23 +388,23 @@ export default function HomeLandingPage() {
             </div>
           </section>
 
-          <section className="bg-slate-900 px-4 py-16 text-white sm:px-6 lg:px-12 lg:py-20">
+          <section className="bg-brand-700 px-4 py-16 text-white sm:px-6 lg:px-12 lg:py-20">
             <div className="mx-auto flex max-w-4xl flex-col items-center gap-6 text-center">
               <h2 className="text-2xl font-semibold sm:text-3xl">Redo att förenkla din ordervardag?</h2>
-              <p className="text-base text-slate-200 sm:text-lg">
+              <p className="text-base text-brand-50/90 sm:text-lg">
                 Boka en demo med Ordina-teamet eller logga in och börja där du står. På under en timme
                 sätter vi upp spåren, Fortnox-kopplingen och hjälper dig importera dina första ordrar.
               </p>
               <div className="flex w-full flex-col items-stretch gap-3 sm:w-auto sm:flex-row sm:items-center sm:justify-center">
                 <Link
                   href="mailto:info@ordina.se"
-                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-slate-900 shadow-lg shadow-slate-800/50 transition hover:-translate-y-0.5"
+                  className="inline-flex h-12 items-center justify-center rounded-full bg-white px-6 text-sm font-semibold text-brand-700 shadow-lg shadow-brand-900/40 transition hover:-translate-y-0.5"
                 >
                   Boka demo
                 </Link>
                 <Link
                   href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 px-6 text-sm font-semibold text-white transition hover:bg-white/10"
+                  className="inline-flex h-12 items-center justify-center rounded-full border border-white/60 px-6 text-sm font-semibold text-white transition hover:bg-white/15"
                 >
                   Logga in
                 </Link>

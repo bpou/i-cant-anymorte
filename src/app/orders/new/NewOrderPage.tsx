@@ -97,7 +97,7 @@ function CollapsibleSection({
         style={open ? undefined : { maxHeight: 0 }}
       >
         {open && (
-          <div className="rounded-lg border border-slate-300 bg-white p-4">
+          <div className="rounded-lg border border-neutral-300 bg-white p-4">
             {/* ✅ Grid bara om useGrid är true */}
             {useGrid ? (
               <div className="grid grid-cols-12 gap-3">{children}</div>
@@ -239,122 +239,131 @@ export default function NewOrderPage() {
 
 
 
-  /* -------------------- Submit -------------------- */
-  async function submit() {
-    setMsg(null);
+ async function submit() {
+  setMsg(null);
 
-    // Basvalidering
-    if (!title.trim()) { setMsg("Titel krävs."); return; }
-    if (!customerNumber) { setMsg("Välj kund (Fortnox)."); return; }
-    if (!tracks.length) { setMsg("Välj minst ett spår (A/B)."); return; }
-    if (!autoSchedule) {
-      if (tracks.includes("A") && !(manualA.start && manualA.end)) { setMsg("Ange manuell start/slut för Spår A eller slå på automatisk planering."); return; }
-      if (tracks.includes("B") && !(manualB.start && manualB.end)) { setMsg("Ange manuell start/slut för Spår B eller slå på automatisk planering."); return; }
-    }
-
-    // Orderrader -> håll samma struktur som din backend förväntar sig (lowercase)
-    const orderRows = rows.map((r) => ({
-      articleNumber: r.articleNumber || undefined,
-      description:  r.description  || title,
-      OrderedQuantity: Number(r.OrderedQuantity || 1),
-      price: Number(r.price || 0),
-      unit: r.unit || "st",
-    }));
-
-    // Lokalt body (behåll nycklar så backend inte går sönder)
-    const body: any = {
-      title,
-      customerName,
-      tracks,
-      autoSchedule,
-      customerNumber,
-      orderRows, // samma nyckel som tidigare (lowercase)
-      // leveransinfo (lokalt)
-      deliveryAddress,
-      deliveryName,
-      deliveryStreet,
-      deliveryZip,
-      deliveryCity,
-      // viktigt: detta sparas i din prisma.order.deliveryMethod i din POST-handler
-      deliveryMethod: wayOfDelivery,
-      // ev. använd på servern om du lägger till stöd
-      priceList,
-    };
-
-    if (autoSchedule) {
-      body.estimateA = tracks.includes("A") ? estimateA : undefined;
-      body.estimateB = tracks.includes("B") ? estimateB : undefined;
-    } else {
-      body.manualA = tracks.includes("A") ? manualA : undefined;
-      body.manualB = tracks.includes("B") ? manualB : undefined;
-    }
-
-    // Extra Fortnox-fält (om din backend läser body.fortnox)
-    const frxRows = rows.map((r) => ({
-      ArticleNumber: r.articleNumber || undefined,
-      Description:  r.description  || title,
-      OrderedQuantity: Number(r.OrderedQuantity || 1),
-      Price: Number(r.price || 0),
-      Unit: r.unit || "st",
-    }));
-    body.fortnox = {
-      CustomerNumber: customerNumber,
-      OrderDate: orderDate || undefined,
-      DeliveryDate: deliveryDate || undefined,
-      OurReference: ourReference || undefined,
-      YourReference: yourReference || undefined,
-      PriceList: priceList || undefined,
-      VATIncluded: !!pricesInclVAT,
-
-      CustomerName: invoiceName || undefined,
-      Address1: invoiceAddress1 || undefined,
-      Address2: invoiceAddress2 || undefined,
-      ZipCode: invoiceZip || undefined,
-      City: invoiceCity || undefined,
-      OrganisationNumber: organisationNumber || undefined,
-      Phone1: phone1 || undefined,
-
-      EmailInformation: email ? { EmailAddressTo: email } : undefined,
-
-      DeliveryName: deliveryName || undefined,
-      DeliveryAddress1: deliveryStreet || undefined,
-      DeliveryAddress2: deliveryAddress || undefined,
-      DeliveryZipCode: deliveryZip || undefined,
-      DeliveryCity: deliveryCity || undefined,
-      WayOfDelivery: wayOfDelivery || undefined,
-
-      Remarks: title || undefined,
-      OrderRows: frxRows,
-    };
-
-    setSubmitting(true);
-    try {
-      const res = await fetch("/api/orders", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(body),
-      });
-      const json = await res.json();
-
-      if (!res.ok) {
-        const message = json?.error ?? json?.fortnoxError ?? json?.message ?? res.statusText ?? "okänt fel";
-        setMsg("Fel: " + message);
-        return;
-      }
-
-      const docNo = json?.fortnox?.documentNumber;
-      if (json.fortnoxError || !docNo) {
-        setMsg(`Order skapad lokalt, men Fortnox-fel: ${json.fortnoxError ?? "saknar DocumentNumber"}`);
-        return;
-      }
-
-      window.location.href = `/orders/${encodeURIComponent(docNo)}`;
-    } catch {
-      setMsg("Tekniskt fel vid skapande av order.");
-    } finally {
-      setSubmitting(false);
-    }
+  // Basvalidering
+  if (!title.trim()) { setMsg("Titel krävs."); return; }
+  if (!customerNumber) { setMsg("Välj kund (Fortnox)."); return; }
+  if (!tracks.length) { setMsg("Välj minst ett spår (A/B)."); return; }
+  if (!autoSchedule) {
+    if (tracks.includes("A") && !(manualA.start && manualA.end)) { setMsg("Ange manuell start/slut för Spår A eller slå på automatisk planering."); return; }
+    if (tracks.includes("B") && !(manualB.start && manualB.end)) { setMsg("Ange manuell start/slut för Spår B eller slå på automatisk planering."); return; }
   }
+
+  // Orderrader -> backend-friendly shape
+  const orderRows = rows.map((r) => ({
+    articleNumber: r.articleNumber || undefined,
+    description:  r.description  || title,
+    OrderedQuantity: Number(r.OrderedQuantity || 1),
+    price: Number(r.price || 0),
+    unit: r.unit || "st",
+  }));
+
+  // Request body
+  const body: any = {
+    title,
+    customerName,
+    tracks,
+    autoSchedule,
+    customerNumber,
+    orderRows,
+    deliveryAddress,
+    deliveryName,
+    deliveryStreet,
+    deliveryZip,
+    deliveryCity,
+    deliveryMethod: wayOfDelivery,
+    priceList,
+  };
+
+  if (autoSchedule) {
+    body.estimateA = tracks.includes("A") ? estimateA : undefined;
+    body.estimateB = tracks.includes("B") ? estimateB : undefined;
+  } else {
+    body.manualA = tracks.includes("A") ? manualA : undefined;
+    body.manualB = tracks.includes("B") ? manualB : undefined;
+  }
+
+  // Fortnox payload
+  const frxRows = rows.map((r) => ({
+    ArticleNumber: r.articleNumber || undefined,
+    Description:  r.description  || title,
+    OrderedQuantity: Number(r.OrderedQuantity || 1),
+    Price: Number(r.price || 0),
+    Unit: r.unit || "st",
+  }));
+  body.fortnox = {
+    CustomerNumber: customerNumber,
+    OrderDate: orderDate || undefined,
+    DeliveryDate: deliveryDate || undefined,
+    OurReference: ourReference || undefined,
+    YourReference: yourReference || undefined,
+    PriceList: priceList || undefined,
+    VATIncluded: !!pricesInclVAT,
+
+    CustomerName: invoiceName || undefined,
+    Address1: invoiceAddress1 || undefined,
+    Address2: invoiceAddress2 || undefined,
+    ZipCode: invoiceZip || undefined,
+    City: invoiceCity || undefined,
+    OrganisationNumber: organisationNumber || undefined,
+    Phone1: phone1 || undefined,
+
+    EmailInformation: email ? { EmailAddressTo: email } : undefined,
+
+    DeliveryName: deliveryName || undefined,
+    DeliveryAddress1: deliveryStreet || undefined,
+    DeliveryAddress2: deliveryAddress || undefined,
+    DeliveryZipCode: deliveryZip || undefined,
+    DeliveryCity: deliveryCity || undefined,
+    WayOfDelivery: wayOfDelivery || undefined,
+
+    Remarks: title || undefined,
+    OrderRows: frxRows,
+  };
+
+  setSubmitting(true);
+  try {
+    const res = await fetch("/api/orders", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    const json = await res.json();
+
+    if (!res.ok) {
+      const message = json?.error ?? json?.fortnoxError ?? json?.message ?? res.statusText ?? "okänt fel";
+      setMsg("Fel: " + message);
+      return;
+    }
+
+    // Try multiple shapes to find the Fortnox DocumentNumber
+    const docNo: string | undefined =
+      json?.fortnox?.documentNumber ??
+      json?.documentNumber ??
+      json?.order?.orderNumber ??
+      json?.orderNumber ??
+      json?.Order?.DocumentNumber;
+
+    if (!docNo) {
+      setMsg("Order skapad, men saknar Fortnox DocumentNumber i svaret.");
+      return;
+    }
+
+    // Fire-and-forget PDF sync so the file shows up automatically
+    fetch(`/api/orders/${encodeURIComponent(docNo)}/fortnox-sync`, { method: "POST" })
+      .catch(() => { /* ignore */ });
+
+    // Go to the order page
+    window.location.href = `/orders/${encodeURIComponent(docNo)}`;
+  } catch {
+    setMsg("Tekniskt fel vid skapande av order.");
+  } finally {
+    setSubmitting(false);
+  }
+}
+
 
   /* -------------------- UI -------------------- */
   return (
@@ -372,33 +381,20 @@ export default function NewOrderPage() {
 <div className="flex gap-3">
 <Link
   href="/orders/overview"
-  className="
-    inline-flex items-center justify-center
-    rounded-xl bg-emerald-500 text-white
-    px-4 py-2
-    text-sm font-medium
-    hover:bg-emerald-600
-    focus:outline-none focus:ring-2 focus:ring-emerald-400
-  "
+  className=" inline-flex items-center justify-center rounded-xl bg-brand-500 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-400 "
 >
   VISA LISTA
 </Link>
 
 
-  <button
-  className="
-    inline-flex items-center gap-2
-    rounded-xl border border-slate-300
-    bg-white text-slate-700
-    px-4 py-0.5
-    text-sm font-medium
-    hover:bg-slate-100
-    focus:outline-none focus:ring-2 focus:ring-slate-300
-  "
+<button
+  onClick={submit}                  // ← add this
+  className=" inline-flex items-center gap-2 rounded-xl border border-neutral-300 bg-white text-neutral-700 px-4 py-0.5 text-sm font-medium hover:bg-neutral-100 focus:outline-none focus:ring-2 focus:ring-neutral-300 "
 >
   <span className="text-lg">＋</span>
   SKAPA ORDER
 </button>
+
 
 </div>
 
@@ -652,13 +648,7 @@ export default function NewOrderPage() {
               <button
                 type="button"
                 onClick={() => removeRow(i)}
-                className="
-                  bg-rose-500 text-white
-                  rounded-xl
-                  px-3 py-1 text-xs font-medium
-                  hover:bg-rose-600
-                  focus:outline-none focus:ring-2 focus:ring-rose-400
-                "
+                className=" bg-error-500 text-white rounded-xl px-3 py-1 text-xs font-medium hover:bg-error-600 focus:outline-none focus:ring-2 focus:ring-error-400 "
               >
                 Ta bort
               </button>
@@ -673,13 +663,7 @@ export default function NewOrderPage() {
       <button
         type="button"
         onClick={addRow}
-        className="
-          inline-flex items-center justify-center
-          rounded-xl bg-emerald-500/50 text-white
-          px-4 py-2 text-sm font-medium
-          hover:bg-emerald-600
-          focus:outline-none focus:ring-2 focus:ring-emerald-400
-        "
+        className=" inline-flex items-center justify-center rounded-xl bg-brand-500/50 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-400 "
       >
         + Lägg till rad
       </button>
@@ -807,14 +791,7 @@ export default function NewOrderPage() {
           <button
             onClick={submit}
             disabled={submitting}
-            className="
-    inline-flex items-center justify-center
-    rounded-xl    bg-emerald-500 text-white
-    px-4 py-2
-    text-sm font-medium
-    hover:bg-emerald-600
-    focus:outline-none focus:ring-2 focus:ring-emerald-400
-  "
+            className=" inline-flex items-center justify-center rounded-xl bg-brand-500 text-white px-4 py-2 text-sm font-medium hover:bg-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-400 "
           >
             Skapa order
           </button>

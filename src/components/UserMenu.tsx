@@ -1,8 +1,11 @@
-"use client";
+﻿"use client";
 
 import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { signOut, signIn } from "next-auth/react";
+import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
+import { ChevronDown, LogOut, UserCog } from "lucide-react";
 
 export default function UserMenu({
   name,
@@ -16,9 +19,11 @@ export default function UserMenu({
   isLoggedIn: boolean;
 }) {
   const [open, setOpen] = useState(false);
+  const router = useRouter();
   const menuRef = useRef<HTMLDivElement>(null);
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const firstItemRef = useRef<HTMLButtonElement>(null);
 
-  // Stäng menyn när man klickar utanför
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
@@ -29,63 +34,157 @@ export default function UserMenu({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  // ✅ Om ingen är inloggad → visa bara Logga in-knapp
+  useEffect(() => {
+    function onKey(e: KeyboardEvent) {
+      if (e.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  }, []);
+
+  useEffect(() => {
+    if (open) {
+      const t = setTimeout(() => firstItemRef.current?.focus(), 0);
+      return () => clearTimeout(t);
+    }
+  }, [open]);
+
+  const menuVariants = {
+    hidden: { opacity: 0, y: -6, scale: 0.98, filter: "blur(4px)" },
+    visible: {
+      opacity: 1,
+      y: 0,
+      scale: 1,
+      filter: "blur(0px)",
+      transition: { type: "spring", stiffness: 420, damping: 28 },
+    },
+    exit: { opacity: 0, y: -6, scale: 0.98, filter: "blur(4px)", transition: { duration: 0.12 } },
+  } as const;
+
+  // Shared trigger styles:
+  // - Mobile (default): perfect circle avatar button (h-10 w-10), no text/chevron
+  // - Desktop (sm+): pill with avatar + name + chevron
+  const triggerBase =
+    "flex items-center rounded-full border border-neutral-200 bg-white/70 backdrop-blur shadow-sm transition " +
+    "hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50";
+
+  const triggerResponsive =
+    "h-10 w-10 p-0 justify-center gap-0 " + // mobile -> circle
+    "sm:h-auto sm:w-auto sm:px-2 sm:py-1 sm:pr-2.5 sm:gap-2"; // desktop -> pill
+
   if (!isLoggedIn) {
     return (
       <button
+        ref={buttonRef}
         onClick={() => signIn()}
-        className="
-          rounded-xl border border-slate-300 bg-white
-          px-4 py-1 text-sm font-medium text-slate-700
-          hover:bg-slate-100
-        "
+        className={`${triggerBase} ${triggerResponsive}`}
+        aria-label="Logga in"
       >
-        Logga in
+        {/* Avatar always shown; text only on desktop */}
+        <Image
+          src={image || "/default-avatar.png"}
+          alt="Profilbild"
+          width={32}
+          height={32}
+          className="rounded-full border border-neutral-300"
+        />
+        <span className="hidden sm:inline max-w-[9rem] truncate text-sm font-medium text-neutral-700">
+          Logga in
+        </span>
+        <ChevronDown className="hidden sm:inline h-4 w-4 text-neutral-600" aria-hidden />
       </button>
     );
   }
 
-  // ✅ Om användaren är inloggad → visa profilmeny
   return (
     <div className="relative" ref={menuRef}>
-      <button onClick={() => setOpen((o) => !o)} className="focus:outline-none">
+      <button
+        ref={buttonRef}
+        onClick={() => setOpen((o) => !o)}
+        className={`${triggerBase} ${triggerResponsive}`}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls="user-menu"
+        aria-label="Användarmeny"
+      >
         <Image
           src={image || "/default-avatar.png"}
           alt="Profilbild"
-          width={36}
-          height={36}
-          className="rounded-full border border-slate-300 hover:ring-2 hover:ring-primary/30 transition"
+          width={32}
+          height={32}
+          className="rounded-full border border-neutral-300"
+        />
+        {/* Name visible only on desktop */}
+        <span className="hidden sm:inline max-w-[9rem] truncate text-sm text-neutral-700">
+          {name || email || "Användare"}
+        </span>
+        <ChevronDown
+          className={`hidden sm:inline h-4 w-4 text-neutral-600 transition ${open ? "rotate-180" : "rotate-0"}`}
+          aria-hidden
         />
       </button>
 
-      {open && (
-        <div className="absolute right-0 mt-2 w-56 rounded-xl border border-slate-200 bg-white shadow-lg p-3 z-50">
-          <div className="flex items-center gap-3 border-b border-slate-100 pb-3 mb-3">
-            <Image
-              src={image || "/default-avatar.png"}
-              alt="Profil"
-              width={40}
-              height={40}
-              className="rounded-full border border-slate-300"
-            />
-            <div>
-              <p className="text-sm font-medium text-slate-800">{name}</p>
-              <p className="text-xs text-slate-500">{email}</p>
-            </div>
-          </div>
-
-          <button
-            onClick={() => signOut({ callbackUrl: "/" })}
-            className="
-              w-full text-left rounded-lg px-3 py-2
-              text-sm font-medium text-slate-700
-              hover:bg-slate-100
-            "
+      <AnimatePresence>
+        {open && (
+          <motion.div
+            id="user-menu"
+            role="menu"
+            aria-orientation="vertical"
+            initial="hidden"
+            animate="visible"
+            exit="exit"
+            variants={menuVariants}
+            className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-neutral-200 bg-white/90 p-3 shadow-xl ring-1 ring-black/5 backdrop-blur"
           >
-            Logga ut
-          </button>
-        </div>
-      )}
+            <div className="absolute -top-2 right-6 h-4 w-4 rotate-45 border border-neutral-200 bg-white/90 ring-1 ring-black/5" />
+
+            <div className="relative flex items-center gap-3 rounded-xl border border-neutral-100 bg-gradient-to-br from-white to-neutral-50 p-3">
+              <Image
+                src={image || "/default-avatar.png"}
+                alt="Profil"
+                width={44}
+                height={44}
+                className="rounded-full border border-neutral-300"
+              />
+              <div className="min-w-0">
+                <p className="truncate text-sm font-semibold text-neutral-800">{name || "Användare"}</p>
+                <p className="truncate text-xs text-neutral-500">{email}</p>
+              </div>
+            </div>
+
+            <div className="my-3 h-px bg-gradient-to-r from-transparent via-neutral-200 to-transparent" />
+
+            <button
+              ref={firstItemRef}
+              onClick={() => {
+                router.push("/account");
+                setOpen(false);
+              }}
+              className="group flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              role="menuitem"
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white shadow-sm group-hover:border-neutral-300">
+                <UserCog className="h-4 w-4" aria-hidden />
+              </span>
+              Konto & inställningar
+            </button>
+
+            <button
+              onClick={() => signOut({ callbackUrl: "/" })}
+              className="group mt-1 flex w-full items-center gap-2 rounded-xl px-3 py-2 text-sm font-medium text-neutral-700 transition hover:bg-neutral-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+              role="menuitem"
+            >
+              <span className="inline-flex h-8 w-8 items-center justify-center rounded-lg border border-neutral-200 bg-white shadow-sm group-hover:border-neutral-300">
+                <LogOut className="h-4 w-4" aria-hidden />
+              </span>
+              Logga ut
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

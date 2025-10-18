@@ -12,12 +12,16 @@ enum Role {
   SALJARE
   A_TEAM
   B_TEAM
+  C_TEAM
+  D_TEAM
   ADMIN
 }
 
 enum Track {
   A
   B
+  C
+  D
   SHARED
 }
 
@@ -26,7 +30,25 @@ enum TrackStatus {
   PAGAENDE
   LEVERANS
   AVSLUTAD
+  PALACK        
 }
+
+enum CalendarLabel {
+  BOKAD_TID
+  KAN_FLYTTAS
+  LUNCH
+  SEMESTER
+  TRAFIKVERKET
+  UNDER_VECKAN
+  UTFORT_ARBETE
+}
+
+
+enum EventVisibility {
+  PUBLIC
+  PERSONAL
+}
+
 
 enum DeliveryMethod {
   MONTAGE
@@ -35,18 +57,25 @@ enum DeliveryMethod {
 }
 
 model User {
-  id            String   @id @default(cuid())
-  email         String   @unique
-  name          String?
-  role          Role     @default(SALJARE)
+  id           String   @id @default(cuid())
+  email        String   @unique
+  name         String?
+  image        String?
+  passwordHash String?
+  role         Role     @default(SALJARE)
 
-  // För Auth.js/NextAuth
-  image         String?
+  // For Auth.js / NextAuth
   emailVerified DateTime?
-  passwordHash  String?
+  /// Encrypted TOTP secret (AES-256-GCM, see src/lib/totp-secrets.ts)
+  totpSecret     String?
+  /// Encrypted pending TOTP secret when MFA setup is in progress
+  totpTempSecret String?
+  totpEnabled  Boolean  @default(false)
+  totpEnabledAt DateTime?
 
   accounts      Account[]
   sessions      Session[]
+  ordersCreated Order[] @relation("OrderCreatedBy")
 }
 
 model Order {
@@ -57,6 +86,9 @@ model Order {
   deliveryMethod  String?
   deliveryAddress String?
   notes           String?
+  createdById     String?
+  createdBy       User?         @relation("OrderCreatedBy", fields: [createdById], references: [id])
+  createdByName   String?
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
   tracks          OrderTrack[]
@@ -66,6 +98,7 @@ model Order {
   billingConfirmedAt DateTime?
 }
 
+// OrderTrack
 model OrderTrack {
   id             String      @id @default(cuid())
   orderId        String
@@ -78,8 +111,12 @@ model OrderTrack {
   actualStartAt  DateTime?
   actualEndAt    DateTime?
   assignee       String?
+  timeSpentMinutes Int      @default(0)
+
+  calendarLabel  CalendarLabel?    // Optional label mirrored from calendar UI
 
   @@unique([orderId, track])
+  @@index([track, status], map: "ordertrack_track_status_idx")
 }
 
 model CalendarEvent {
@@ -93,11 +130,38 @@ model CalendarEvent {
   notes   String?
 }
 
+model PersonalCalendarEvent {
+  id          String           @id @default(cuid())
+  track       Track
+  title       String
+  label       CalendarLabel?
+  notes       String?
+  allDay      Boolean          @default(false)
+
+  // single-instance
+  start       DateTime?
+  end         DateTime?
+
+  // simple recurrence (weekly/daily via daysOfWeek)
+  weeklyDays  String?    // JSON string like ["1","3","5"]; 0=Sun..6=Sat (FullCalendar)
+  startRecur  DateTime?
+  endRecur    DateTime?
+  startTime   String?
+  endTime     String?
+
+  visibility  EventVisibility @default(PUBLIC)
+  ownerUserId String?         // required when visibility = PERSONAL
+
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([track, visibility, ownerUserId])
+}
 model File {
   id         String   @id @default(cuid())
   orderId    String
   order      Order    @relation(fields: [orderId], references: [orderNumber], onDelete: Cascade)
-  track      Track    // ✅ obligatorisk enum
+  track      Track    // Required enum
   filename   String
   url        String
   uploadedBy String?
@@ -106,7 +170,7 @@ model File {
 
 model FortnoxConnection {
   id           String   @id @default(cuid())
-  tenantId     String   @unique        // <— gör tenantId unikt
+  tenantId     String   @unique        // Ensure tenantId stays unique
   accessToken  String
   refreshToken String
   scope        String?
@@ -160,3 +224,7 @@ model VerificationToken {
 
   @@unique([identifier, token])
 }
+
+
+
+

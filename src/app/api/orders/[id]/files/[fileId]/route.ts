@@ -7,13 +7,6 @@ export const runtime = "nodejs";
 
 type Ctx = { params: Promise<{ id: string; fileId: string }> };
 
-// Derivera S3-key från URL: https://bucket.s3.region.amazonaws.com/<KEY>
-function keyFromS3Url(url: string) {
-  const u = new URL(url);
-  // u.pathname börjar med "/"
-  return decodeURIComponent(u.pathname.replace(/^\/+/, ""));
-}
-
 export async function DELETE(_req: NextRequest, ctx: Ctx) {
   try {
     const { id: orderId, fileId } = await ctx.params;
@@ -23,12 +16,10 @@ export async function DELETE(_req: NextRequest, ctx: Ctx) {
       return NextResponse.json({ error: "File not found" }, { status: 404 });
     }
 
-    // Försök radera S3-objektet
+    // Attempt to delete the backing S3 object, but swallow missing-object errors.
     try {
-      const key = keyFromS3Url(file.url);
-      await s3DeleteObject(key);
+      await s3DeleteObject(file.url);
     } catch (e) {
-      // OK att ignorera om objektet redan är borta / fel i test
       console.warn("S3 delete warning:", e);
     }
 

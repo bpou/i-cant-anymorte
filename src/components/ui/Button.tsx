@@ -14,7 +14,7 @@ export default function Button({ className, variant = "primary", size = "md", ..
   }[size];
 
   const variants = {
-    primary: "bg-primary text-white hover:opacity-90 shadow-sm",
+    primary: "bg-primary text-black hover:opacity-90 shadow-sm",
     outline: "border border-border text-foreground hover:bg-primary/10",
     ghost:   "text-foreground hover:bg-muted/10",
     danger:  "bg-danger text-white hover:opacity-90 shadow-sm",

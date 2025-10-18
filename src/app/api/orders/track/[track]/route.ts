@@ -2,8 +2,9 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import type { Track, TrackStatus } from "@prisma/client";
+import { normalizeTrack } from "@/lib/tracks";
 
-type Params = { track: "A" | "B" };
+type Params = { track: string };
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -11,36 +12,44 @@ export const revalidate = 0;
 
 export async function GET(
   _req: Request,
-  ctx: { params: Promise<Params> } // behåller din Promise<Params>
+  ctx: { params: Promise<Params> }
 ) {
   const { track } = await ctx.params;
-  const t = track?.toUpperCase() as "A" | "B";
+  const normalized = normalizeTrack(track);
 
-  if (t !== "A" && t !== "B") {
+  if (!normalized) {
     return NextResponse.json({ error: "Ogiltigt spår" }, { status: 400 });
   }
 
-  // ⬇️ Viktigt: Filtrera bort fakturerade (billingConfirmedAt != null)
-  const rows = await prisma.orderTrack.findMany({
-    where: {
-      track: t as Track,
-      order: {
-        billingConfirmedAt: null, // ⬅️ Göm fakturerade ordrar
-      },
-    },
-    include: {
-      order: {
-        select: {
-          orderNumber: true,
-          title: true,
-          customerName: true,
-          createdAt: true,
-          billingConfirmedAt: true, // mest för tydlighet/typning (kan tas bort)
+  let rows: Awaited<ReturnType<typeof prisma.orderTrack.findMany>>;
+  try {
+    rows = await prisma.orderTrack.findMany({
+      where: {
+        track: normalized as Track,
+        order: {
+          billingConfirmedAt: null,
         },
       },
-    },
-    orderBy: { order: { createdAt: "desc" } },
-  });
+      include: {
+        order: {
+          select: {
+            orderNumber: true,
+            title: true,
+            customerName: true,
+            createdAt: true,
+            billingConfirmedAt: true,
+          },
+        },
+      },
+      orderBy: { order: { createdAt: "desc" } },
+    });
+  } catch (error) {
+    console.error(`[orders/track/${normalized}]`, error);
+    return NextResponse.json(
+      { error: "Kunde inte hämta order-spår" },
+      { status: 500 }
+    );
+  }
 
   const STATI = ["INKOMMANDE", "PAGAENDE", "LEVERANS", "AVSLUTAD"] as const;
   type Status = typeof STATI[number];
@@ -59,7 +68,7 @@ export async function GET(
   }
 
   return NextResponse.json(
-    { track: t, grouped },
+    { track: normalized, grouped },
     { headers: { "Cache-Control": "no-store" } }
   );
 }
