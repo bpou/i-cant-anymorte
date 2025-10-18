@@ -953,7 +953,7 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                 weekday: "short",
               });
               return (
-                <div className="flex flex-col items-center gap-0.5 py-1">
+                <div className="flex w-full flex-col items-start gap-0.5 py-1 pl-2 text-left">
                   <span className="text-2xl font-semibold ">
                     {date.getDate()}
                   </span>
