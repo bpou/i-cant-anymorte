@@ -16,7 +16,7 @@ import type { StatusColorParts } from "@/lib/orderStatus";
 import CalendarSkin from "@/components/calendar/CalendarSkin";
 import { OrdinaLogoSpinner } from "@/components/OrdinaLoader";
 import svLocale from "@fullcalendar/core/locales/sv";
-import type { AppTrack } from "@/lib/tracks";
+import { TRACK_CALENDAR_LABELS, type AppTrack } from "@/lib/tracks";
 import { MapPin, ChevronLeft, ChevronRight } from "lucide-react";
 
 /* =========================
@@ -880,38 +880,20 @@ export default function CalendarClient({ track }: CalendarClientProps) {
   const menuCanDelete = isDeletableEvent(menuEvent);
 
   return (
-    <div className="relative p-4">
-      <div className="mb-4 space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          
-          <div className="flex items-center gap-2">
-
-          </div>
-        </div>
-
-        <div className="flex flex-wrap items-center gap-3">
-          <button
-            type="button"
-            onClick={handleToday}
-            className="rounded-full border border-neutral-200 bg-white px-4 py-1.5 text-sm font-semibold text-neutral-700 shadow-sm transition hover:bg-neutral-100"
-          >
-            I dag
-          </button>
-          <div className="flex overflow-hidden rounded-full border border-neutral-200 bg-white shadow-sm">
-            {VIEW_OPTIONS.map((opt) => {
-              const active = currentView === opt.key;
-              return (
+    <div className="bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.08),_transparent_55%)]">
+      <div className="relative mx-auto w-full max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
+        <div className="flex flex-col gap-6">
+          <section className="relative overflow-hidden rounded-3xl border border-brand-200 bg-white/95 px-6 py-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.5)]">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.12),_transparent_70%)]" />
+            <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+              <div className="flex flex-wrap items-center gap-3">
                 <button
-                  key={opt.key}
                   type="button"
-                  onClick={() => handleViewChange(opt.key)}
-                  className={`px-3 py-1.5 text-sm font-semibold transition ${
-                    active
-                      ? "bg-neutral-900 text-white"
-                      : "text-neutral-700 hover:bg-neutral-100"
-                  }`}
+                  onClick={handlePrev}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.45)] transition hover:border-brand-300 hover:bg-brand-50/80 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
                 >
-                  {opt.label}
+                  <ChevronLeft className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Föregående period</span>
                 </button>
               );
             })}
@@ -961,206 +943,295 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                     {weekday}
                   </span>
                 </div>
-              );
-            }}
-            slotDuration="01:00:00"
-            snapDuration="00:30:00"
-            slotLabelFormat={{
-              hour: "numeric",
-            
-              hour12: false,
-            }}
-            eventTimeFormat={{
-              hour: "2-digit",
-              minute: "2-digit",
-              hour12: false,
-            }}
-            scrollTime="07:00:00"
-            scrollTimeReset={false}
-            slotMinTime="00:00:00"
-            slotMaxTime="24:00:00"
-            stickyHeaderDates
-            selectable
-            selectMirror
-            select={(arg) => {
-              setDraft((d) => ({
-                ...d,
-                start: arg.start ? arg.start.toISOString() : "",
-                end: arg.end ? arg.end.toISOString() : "",
-              }));
-              setModalOpen(true);
-            }}
-            events={events}
-            height="100%"
-            contentHeight="100%"
-            nowIndicator
-            expandRows
-            editable
-            datesSet={(arg) => {
-              setToolbarTitle(arg.view.title);
-              setCurrentView(arg.view.type as CalendarView);
-            }}
-            eventDrop={onEventDrop}
-            eventResize={onEventDrop}
-            eventContent={renderEventContent}
-            eventClassNames={eventClassNames}
-            eventAllow={allowEventMutation}
-            eventDidMount={eventDidMount}
-          />
-        </div>
-      </CalendarSkin>
+                <button
+                  type="button"
+                  onClick={handleNext}
+                  className="inline-flex h-9 w-9 items-center justify-center rounded-full border border-brand-200 bg-white text-brand-600 shadow-[0_18px_30px_-24px_rgba(15,23,42,0.45)] transition hover:border-brand-300 hover:bg-brand-50/80 hover:text-brand-700 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                >
+                  <ChevronRight className="h-4 w-4" aria-hidden="true" />
+                  <span className="sr-only">Nästa period</span>
+                </button>
+              </div>
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.26em] text-brand-600">
+                {TRACK_CALENDAR_LABELS[track]}
+              </span>
+            </div>
+            <div className="mt-4 flex flex-wrap items-center gap-3">
+              <button
+                type="button"
+                onClick={handleToday}
+                className="rounded-full border border-brand-200 bg-white px-4 py-1.5 text-sm font-semibold text-brand-700 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition hover:border-brand-300 hover:bg-brand-50/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+              >
+                I dag
+              </button>
+              <div className="flex overflow-hidden rounded-full border border-brand-200 bg-white shadow-[0_18px_40px_-32px_rgba(15,23,42,0.45)]">
+                {VIEW_OPTIONS.map((opt) => {
+                  const active = currentView === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => handleViewChange(opt.key)}
+                      className={`px-3 py-1.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300 ${
+                        active
+                          ? "bg-brand-500 text-white shadow-inner"
+                          : "text-neutral-700 hover:bg-brand-50/80 hover:text-brand-700"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  );
+                })}
+              </div>
+              <div className="ml-auto flex items-center gap-2 text-sm text-neutral-500">
+                {loading && (
+                  <div className="flex items-center gap-2">
+                    <OrdinaLogoSpinner size={20} />
+                    <span>Laddar</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
 
-      {/* Background right-click menu */}
-      {bgMenuOpen && (
-        <div
-          ref={bgMenuRef}
-          className="absolute z-50 min-w-[240px] rounded-lg border border-neutral-200 bg-white shadow-lg overflow-hidden"
-          style={{ left: bgMenuPos.x, top: bgMenuPos.y }}
-          role="menu"
-        >
-          <div className="px-3 py-2 text-xs text-neutral-500 border-b">
-            Ny kalenderhändelse
-          </div>
-          <button
-            className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50"
-            onClick={() => {
-              const now = new Date();
-              const start = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate(),
-                12,
-                0,
-                0,
-              );
-              const end = new Date(
-                now.getFullYear(),
-                now.getMonth(),
-                now.getDate(),
-                13,
-                0,
-                0,
-              );
-              setDraft({
-                title: "",
-                label: null,
-                allDay: false,
-                start: start.toISOString(),
-                end: end.toISOString(),
-                repeat: "none",
-                weeklyDays: [],
-                visibility: "PUBLIC",
-              });
-              setBgMenuOpen(false);
-              setModalOpen(true);
-            }}
+          <section className="relative overflow-hidden rounded-3xl border border-brand-200 bg-white/95 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.5)]">
+            <div className="pointer-events-none absolute inset-0 -z-10 bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.08),_transparent_80%)]" />
+            <div className="relative p-3 sm:p-5">
+              <CalendarSkin framed={false}>
+                <div
+                  ref={calendarRootRef}
+                  className="h-[calc(100vh-260px)] min-h-[600px]"
+                >
+                  <FullCalendar
+                    ref={handleCalendarRef}
+                    plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+                    locales={[svLocale]}
+                    locale="sv"
+                    initialView="timeGridWorkWeek"
+                    headerToolbar={false}
+                    allDaySlot={false}
+                    views={{
+                      timeGridWorkWeek: { type: "timeGridWeek", weekends: false },
+                      timeGridWeek: { type: "timeGridWeek", weekends: true },
+                    }}
+                    titleFormat={{ month: "long", year: "numeric" }}
+                    dayHeaderContent={(args) => {
+                      const date = args.date;
+                      const weekday = date.toLocaleDateString("sv-SE", {
+                        weekday: "short",
+                      });
+                      return (
+                        <div className="flex w-full flex-col items-start gap-0.5 py-1 pl-2 text-left">
+                          <span className="text-2xl font-semibold ">
+                            {date.getDate()}
+                          </span>
+                          <span className="text-xs uppercase tracking-wide text-neutral-500">
+                            {weekday}
+                          </span>
+                        </div>
+                      );
+                    }}
+                    slotDuration="01:00:00"
+                    snapDuration="00:30:00"
+                    slotLabelFormat={{
+                      hour: "numeric",
+
+                      hour12: false,
+                    }}
+                    eventTimeFormat={{
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      hour12: false,
+                    }}
+                    scrollTime="07:00:00"
+                    scrollTimeReset={false}
+                    slotMinTime="00:00:00"
+                    slotMaxTime="24:00:00"
+                    stickyHeaderDates
+                    selectable
+                    selectMirror
+                    select={(arg) => {
+                      setDraft((d) => ({
+                        ...d,
+                        start: arg.start ? arg.start.toISOString() : "",
+                        end: arg.end ? arg.end.toISOString() : "",
+                      }));
+                      setModalOpen(true);
+                    }}
+                    events={events}
+                    height="100%"
+                    contentHeight="100%"
+                    nowIndicator
+                    expandRows
+                    editable
+                    datesSet={(arg) => {
+                      setToolbarTitle(arg.view.title);
+                      setCurrentView(arg.view.type as CalendarView);
+                    }}
+                    eventDrop={onEventDrop}
+                    eventResize={onEventDrop}
+                    eventContent={renderEventContent}
+                    eventClassNames={eventClassNames}
+                    eventAllow={allowEventMutation}
+                    eventDidMount={eventDidMount}
+                  />
+                </div>
+              </CalendarSkin>
+            </div>
+          </section>
+        </div>
+
+        {/* Background right-click menu */}
+        {bgMenuOpen && (
+          <div
+            ref={bgMenuRef}
+            className="absolute z-50 min-w-[240px] overflow-hidden rounded-xl border border-brand-200 bg-white/98 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] backdrop-blur-sm"
+            style={{ left: bgMenuPos.x, top: bgMenuPos.y }}
+            role="menu"
           >
-            + Ny händelse
-          </button>
-        </div>
-      )}
-
-      {/* Event right-click menu */}
-      {menuOpen && (
-        <div
-          ref={menuRef}
-          className="absolute z-50 min-w-[220px] rounded-lg border border-border bg-white shadow-lg overflow-hidden"
-          style={{ left: menuPos.x, top: menuPos.y }}
-          role="menu"
-        >
-          {menuIsOrder && (
-            <>
-              <div className="px-3 py-2 text-xs text-neutral-500 border-b">
-                Sätt status
-              </div>
-              {CALENDAR_STATUS_ORDER.map((s) => (
-                <button
-                  key={s}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
-                  onClick={() => menuEventId && setEventStatus(menuEventId, s)}
-                  role="menuitem"
-                >
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${STATUS_DOT[s]}`}
-                  />
-                  <span className="font-medium">{STATUS_DISPLAY[s]}</span>
-                </button>
-              ))}
-
-              <div className="px-3 py-2 text-xs text-neutral-500 border-y">
-                Kalenderetikett
-              </div>
-              {LABEL_ORDER.map((k) => (
-                <button
-                  key={k}
-                  className="w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 flex items-center gap-2"
-                  onClick={() =>
-                    menuEventId && setCalendarLabel(menuEventId, k)
-                  }
-                  role="menuitem"
-                >
-                  <span
-                    className={`inline-block h-2.5 w-2.5 rounded-full ${LABEL_DOT[k]}`}
-                  />
-                  <span className="font-medium">{labelNice(k)}</span>
-                </button>
-              ))}
-              <div className="border-t">
-                <button
-                  className="w-full text-left px-3 py-2 text-sm  hover:bg-neutral-50"
-                  onClick={() =>
-                    menuEventId && setCalendarLabel(menuEventId, null)
-                  }
-                >
-                  Rensa etikett
-                </button>
-              </div>
-            </>
-          )}
-
-          {/* Delete for any deletable event (free only) */}
-          <div className="border-t">
+            <div className="border-b border-brand-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-500">
+              Ny kalenderhändelse
+            </div>
             <button
-              className={
-                "w-full text-left px-3 py-2 text-sm hover:bg-neutral-50 " +
-                (menuCanDelete
-                  ? "text-red-600 hover:text-red-700"
-                  : "text-neutral-400 cursor-not-allowed")
-              }
-              disabled={!menuCanDelete}
+              className="w-full px-3 py-2 text-left text-sm font-medium text-neutral-700 transition hover:bg-brand-50/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
               onClick={() => {
-                if (!menuEventId || !menuCanDelete) return;
-                deleteEventById(menuEventId);
+                const now = new Date();
+                const start = new Date(
+                  now.getFullYear(),
+                  now.getMonth(),
+                  now.getDate(),
+                  12,
+                  0,
+                  0,
+                );
+                const end = new Date(
+                  now.getFullYear(),
+                  now.getMonth(),
+                  now.getDate(),
+                  13,
+                  0,
+                  0,
+                );
+                setDraft({
+                  title: "",
+                  label: null,
+                  allDay: false,
+                  start: start.toISOString(),
+                  end: end.toISOString(),
+                  repeat: "none",
+                  weeklyDays: [],
+                  visibility: "PUBLIC",
+                });
+                setBgMenuOpen(false);
+                setModalOpen(true);
               }}
             >
-              Ta bort händelse
+              Ny händelse
             </button>
           </div>
+        )}
 
-          <div className="border-t">
-            <button
-              className="w-full text-left px-3 py-2 text-sm  hover:bg-neutral-50"
-              onClick={closeEventMenu}
-            >
-              Stäng
-            </button>
+        {/* Event right-click menu */}
+        {menuOpen && (
+          <div
+            ref={menuRef}
+            className="absolute z-50 min-w-[220px] overflow-hidden rounded-xl border border-brand-200 bg-white/98 shadow-[0_24px_60px_-36px_rgba(15,23,42,0.45)] backdrop-blur-sm"
+            style={{ left: menuPos.x, top: menuPos.y }}
+            role="menu"
+          >
+            {menuIsOrder && (
+              <>
+                <div className="border-b border-brand-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-500">
+                  Sätt status
+                </div>
+                {CALENDAR_STATUS_ORDER.map((s) => (
+                  <button
+                    key={s}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-neutral-700 transition hover:bg-brand-50/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                    onClick={() => menuEventId && setEventStatus(menuEventId, s)}
+                    role="menuitem"
+                  >
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${STATUS_DOT[s]}`}
+                    />
+                    <span className="font-medium">{STATUS_DISPLAY[s]}</span>
+                  </button>
+                ))}
+
+                <div className="border-y border-brand-100 px-3 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-brand-500">
+                  Kalenderetikett
+                </div>
+                {LABEL_ORDER.map((k) => (
+                  <button
+                    key={k}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm font-medium text-neutral-700 transition hover:bg-brand-50/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                    onClick={() =>
+                      menuEventId && setCalendarLabel(menuEventId, k)
+                    }
+                    role="menuitem"
+                  >
+                    <span
+                      className={`inline-block h-2.5 w-2.5 rounded-full ${LABEL_DOT[k]}`}
+                    />
+                    <span className="font-medium">{labelNice(k)}</span>
+                  </button>
+                ))}
+                <div className="border-t border-brand-100">
+                  <button
+                    className="w-full px-3 py-2 text-left text-sm font-medium text-neutral-600 transition hover:bg-brand-50/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                    onClick={() =>
+                      menuEventId && setCalendarLabel(menuEventId, null)
+                    }
+                  >
+                    Rensa etikett
+                  </button>
+                </div>
+              </>
+            )}
+
+            {/* Delete for any deletable event (free only) */}
+            <div className="border-t border-brand-100">
+              <button
+                className={
+                  "w-full px-3 py-2 text-left text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 " +
+                  (menuCanDelete
+                    ? "text-red-600 hover:bg-red-50 focus-visible:outline-red-200"
+                    : "cursor-not-allowed text-neutral-400 focus-visible:outline-neutral-300")
+                }
+                disabled={!menuCanDelete}
+                onClick={() => {
+                  if (!menuEventId || !menuCanDelete) return;
+                  deleteEventById(menuEventId);
+                }}
+              >
+                Ta bort händelse
+              </button>
+            </div>
+
+            <div className="border-t border-brand-100">
+              <button
+                className="w-full px-3 py-2 text-left text-sm font-medium text-neutral-600 transition hover:bg-brand-50/70 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
+                onClick={closeEventMenu}
+              >
+                Stäng
+              </button>
+            </div>
           </div>
-        </div>
-      )}
+        )}
 
       {/* New free-form event modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/30 p-4">
-          <div className="w-full max-w-lg rounded-2xl bg-white shadow-xl border border-neutral-200">
-            <div className="px-5 py-4 border-b">
-              <h3 className="text-lg font-semibold">Ny händelse</h3>
+          <div className="w-full max-w-lg rounded-3xl border border-brand-200 bg-white/98 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.5)] backdrop-blur-sm">
+            <div className="border-b border-brand-100 px-6 py-5">
+              <h3 className="text-lg font-semibold text-neutral-900">Ny händelse</h3>
             </div>
 
-            <div className="p-5 space-y-4">
+            <div className="space-y-4 px-6 py-5">
               <div>
-                <label className="text-sm ">Titel</label>
+                <label className="text-sm font-semibold text-neutral-700">Titel</label>
                 <input
-                  className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2"
+                  className="mt-1 w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
                   value={draft.title}
                   onChange={(e) =>
                     setDraft({ ...draft, title: e.target.value })
@@ -1170,19 +1241,18 @@ export default function CalendarClient({ track }: CalendarClientProps) {
               </div>
 
               <div>
-                <label className="text-sm ">Synlighet</label>
-                <div className="mt-2 inline-flex rounded-full border border-neutral-200 p-1">
+                <label className="text-sm font-semibold text-neutral-700">Synlighet</label>
+                <div className="mt-2 inline-flex rounded-full border border-brand-200 bg-white/95 p-1 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)]">
                   {(["PUBLIC", "PERSONAL"] as const).map((v) => (
                     <button
                       key={v}
                       type="button"
                       onClick={() => setDraft({ ...draft, visibility: v })}
-                      className={
-                        "px-3 py-1.5 text-sm rounded-full transition " +
-                        (draft.visibility === v
-                          ? "bg-neutral-900 text-white"
-                          : " hover:bg-neutral-50")
-                      }
+                      className={`rounded-full px-3 py-1.5 text-sm font-semibold transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300 ${
+                        draft.visibility === v
+                          ? "bg-brand-600 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.24)]"
+                          : "text-neutral-600 hover:bg-brand-50/80"
+                      }`}
                     >
                       {v === "PUBLIC" ? "Public" : "Personal"}
                     </button>
@@ -1190,12 +1260,12 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-sm ">Start</label>
+                  <label className="text-sm font-semibold text-neutral-700">Start</label>
                   <input
                     type="datetime-local"
-                    className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
                     value={toLocalInputValue(draft.start)}
                     onChange={(e) =>
                       setDraft({
@@ -1207,10 +1277,10 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                   />
                 </div>
                 <div>
-                  <label className="text-sm ">Slut</label>
+                  <label className="text-sm font-semibold text-neutral-700">Slut</label>
                   <input
                     type="datetime-local"
-                    className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100 disabled:opacity-60"
                     value={toLocalInputValue(draft.end)}
                     onChange={(e) =>
                       setDraft({
@@ -1223,11 +1293,11 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                 </div>
               </div>
 
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 <div>
-                  <label className="text-sm ">Typ</label>
+                  <label className="text-sm font-semibold text-neutral-700">Typ</label>
                   <select
-                    className="mt-1 w-full rounded-lg border border-neutral-200 px-3 py-2"
+                    className="mt-1 w-full rounded-xl border border-brand-200 bg-white px-3 py-2 text-sm text-neutral-800 shadow-[inset_0_1px_0_rgba(255,255,255,0.4)] transition focus:border-brand-400 focus:outline-none focus:ring-2 focus:ring-brand-100"
                     value={draft.label ?? ""}
                     onChange={(e) =>
                       setDraft({
@@ -1244,20 +1314,19 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                     ))}
                   </select>
                 </div>
- 
               </div>
 
               <div>
-                <label className="text-sm ">Upprepa</label>
-                <div className="mt-2 flex gap-2">
+                <label className="text-sm font-semibold text-neutral-700">Upprepa</label>
+                <div className="mt-2 flex flex-wrap gap-2">
                   {["none", "daily", "weekly"].map((v) => (
                     <button
                       key={v}
                       onClick={() => setDraft({ ...draft, repeat: v as any })}
-                      className={`px-3 py-1.5 rounded-full border ${
+                      className={`rounded-full border px-3 py-1.5 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300 ${
                         draft.repeat === v
-                          ? "border-neutral-900 bg-neutral-900 text-white"
-                          : "border-neutral-200"
+                          ? "border-brand-500 bg-brand-500 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
+                          : "border-brand-200 text-neutral-600 hover:bg-brand-50/80"
                       }`}
                       type="button"
                     >
@@ -1291,10 +1360,10 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                             else set.add(val);
                             setDraft({ ...draft, weeklyDays: Array.from(set) });
                           }}
-                          className={`px-2 py-1 rounded-md border text-sm ${
+                          className={`rounded-lg border px-2 py-1 text-sm font-medium transition focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300 ${
                             active
-                              ? "bg-neutral-900 text-white border-neutral-900"
-                              : "border-neutral-200"
+                              ? "border-brand-500 bg-brand-500 text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.25)]"
+                              : "border-brand-200 text-neutral-600 hover:bg-brand-50/80"
                           }`}
                           type="button"
                         >
@@ -1307,21 +1376,21 @@ export default function CalendarClient({ track }: CalendarClientProps) {
               </div>
             </div>
 
-            <div className="px-5 py-4 border-t flex items-center gap-2">
+            <div className="flex items-center gap-3 border-t border-brand-100 px-6 py-5">
               {saveError && (
-                <div className="text-sm text-red-600 mr-auto" aria-live="polite">
+                <div className="mr-auto text-sm font-medium text-red-600" aria-live="polite">
                   {saveError}
                 </div>
               )}
               <button
-                className="ml-auto px-3 py-2 text-sm rounded-lg border"
+                className="ml-auto rounded-full border border-brand-200 bg-white px-4 py-2 text-sm font-medium text-neutral-600 transition hover:border-brand-300 hover:bg-brand-50/80 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300"
                 onClick={() => setModalOpen(false)}
                 type="button"
               >
                 Avbryt
               </button>
               <button
-                className="px-3 py-2 text-sm rounded-lg bg-neutral-900 text-white disabled:opacity-60 disabled:cursor-not-allowed"
+                className="rounded-full bg-brand-600 px-4 py-2 text-sm font-semibold text-white shadow-[0_18px_40px_-28px_rgba(15,23,42,0.45)] transition hover:bg-brand-500 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-300 disabled:cursor-not-allowed disabled:opacity-60 disabled:hover:bg-brand-600"
                 onClick={handleSaveFreeEvent}
                 disabled={saving}
                 type="button"
@@ -1335,11 +1404,12 @@ export default function CalendarClient({ track }: CalendarClientProps) {
 
       {/* Action error toast-ish */}
       {actionError && (
-        <div className="fixed bottom-4 right-4 bg-red-600 text-white px-4 py-2 rounded-lg shadow">
+        <div className="fixed bottom-4 right-4 rounded-lg bg-red-600 px-4 py-2 text-white shadow">
           {actionError}
         </div>
       )}
     </div>
+  </div>
   );
 }
 
