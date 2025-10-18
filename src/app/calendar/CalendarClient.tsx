@@ -895,8 +895,53 @@ export default function CalendarClient({ track }: CalendarClientProps) {
                   <ChevronLeft className="h-4 w-4" aria-hidden="true" />
                   <span className="sr-only">Föregående period</span>
                 </button>
-                <div className="rounded-full border border-brand-200 bg-white/90 px-4 py-1.5 text-sm font-semibold text-neutral-900 shadow-[0_20px_45px_-32px_rgba(15,23,42,0.5)]">
-                  {toolbarTitle || "Kalender"}
+              );
+            })}
+          </div>
+          <div className="ml-auto flex items-center gap-2 text-sm text-neutral-500">
+            {loading && (
+              <div className="flex items-center gap-2">
+                <OrdinaLogoSpinner size={20} />
+                <span>Laddar</span>
+              </div>
+            )}
+          </div>
+        </div>
+
+      
+      </div>
+
+      <CalendarSkin>
+        <div
+          ref={calendarRootRef}
+          className="h-[calc(100vh-260px)] min-h-[600px]"
+        >
+          <FullCalendar
+            ref={handleCalendarRef}
+            plugins={[dayGridPlugin, timeGridPlugin, interactionPlugin]}
+            locales={[svLocale]}
+            locale="sv"
+            initialView="timeGridWorkWeek"
+            headerToolbar={false}
+            allDaySlot={false}
+            views={{
+              timeGridWorkWeek: { type: "timeGridWeek", weekends: false },
+              timeGridWeek: { type: "timeGridWeek", weekends: true },
+            }}
+            titleFormat={{ month: "long", year: "numeric" }}
+            dayHeaderContent={(args) => {
+              const date = args.date;
+              const weekday = date.toLocaleDateString("sv-SE", {
+                weekday: "short",
+              });
+              return (
+                <div className="flex w-full flex-col items-start gap-0.5 py-1 pl-2 text-left">
+                  <span className="text-2xl font-semibold ">
+                    {date.getDate()}
+                  </span>
+                  <span className="text-xs uppercase tracking-wide text-neutral-500">
+                    {weekday}
+                  </span>
                 </div>
                 <button
                   type="button"
