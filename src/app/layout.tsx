@@ -1,5 +1,4 @@
 import "./globals.css";
-import Image from "next/image";
 import Link from "next/link";
 import MobileMenu from "@/components/MobileMenu";
 import { getServerSession } from "next-auth";
@@ -42,18 +41,9 @@ export default async function RootLayout({
             >
               {/* Desktop-version */}
               <div className="hidden h-18 items-center justify-between px-6 sm:flex">
-                {/* Left: hamburger + logo */}
+                {/* Left: hamburger */}
                 <div className="flex items-center gap-2">
                   <MobileMenu />
-                  <Link href="/" className="hover:text-brand-600 transition">
-                    <Image
-                      src="/logo.png"
-                      alt="Ordina"
-                      width={175}
-                      height={30}
-                      className="object-contain"
-                    />
-                  </Link>
                 </div>
 
                 {/* Right: user menu (authenticator warning removed) */}
@@ -74,21 +64,8 @@ export default async function RootLayout({
                   <MobileMenu />
                 </div>
 
-                {/* Center: logo */}
-                <Link
-                  href="/"
-                  className="shrink-0 hover:opacity-90 transition"
-                  aria-label="Gå till startsidan"
-                >
-                  <Image
-                    src="/logo.png"
-                    alt="Ordina"
-                    width={124}
-                    height={26}
-                    priority
-                    className="object-contain"
-                  />
-                </Link>
+                {/* Center intentionally left blank to hide the logo */}
+                <div aria-hidden className="h-6 w-[124px] shrink-0" />
 
                 {/* Right: user avatar (authenticator warning removed) */}
                 <div className="flex items-center gap-2">
