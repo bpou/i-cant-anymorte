@@ -47,21 +47,21 @@ const QUICK_LINK_META: Record<
     description: "Starta ett nytt uppdrag på några sekunder",
     href: "/orders/new",
     icon: PlusCircle,
-    accent: "bg-brand-50 text-brand-700 border border-brand-200",
+    accent: "bg-brand-50 text-brand-700 border border-brand-100",
   },
   overview: {
     title: "Orderöversikt",
     description: "Få en filtrerbar lista på alla ordrar",
     href: "/orders/overview",
     icon: LayoutDashboard,
-    accent: "bg-sky-50 text-sky-700 border border-sky-200",
+    accent: "bg-sky-50 text-sky-700 border border-sky-100",
   },
   completed: {
     title: "Att fakturera",
     description: "Säkra att färdiga uppdrag faktureras i tid",
     href: "/orders/completed",
     icon: ClipboardCheck,
-    accent: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+    accent: "bg-emerald-50 text-emerald-700 border border-emerald-100",
   },
 };
 
@@ -202,10 +202,10 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
   return (
     <div className="bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.08),_transparent_55%)]">
       <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-10">
-        <header className="rounded-3xl border border-brand-200 bg-white px-7 py-9 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.42)]">
+        <header className="rounded-3xl border border-brand-100/70 bg-white px-7 py-9 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.45)]">
           <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
             <div className="space-y-3">
-              <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-100 bg-brand-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">
                 Välkommen tillbaka
               </span>
               <div className="space-y-2">
@@ -215,7 +215,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
                 </p>
               </div>
             </div>
-            <div className="flex w-full max-w-sm items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/40 p-4 text-sm text-neutral-600">
+            <div className="flex w-full max-w-sm items-start gap-3 rounded-2xl border border-brand-100 bg-brand-50/40 p-4 text-sm text-neutral-600">
               <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-600">
                 <Lightbulb className="h-5 w-5" aria-hidden="true" />
               </span>
@@ -236,7 +236,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
               <Link
                 key={key}
                 href={meta.href}
-                className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+                className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-brand-100 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
               >
                 <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full ${meta.accent}`}>
                   <Icon className="h-5 w-5" aria-hidden="true" />
@@ -271,7 +271,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
             <Link
               key={track}
               href={`/orders/track/${track}`}
-              className="group relative overflow-hidden rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+              className="group relative overflow-hidden rounded-2xl border border-brand-100 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
             >
               <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
                 Spår {track}
@@ -285,7 +285,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
           ))}
         </section>
 
-        <section className="rounded-3xl border border-brand-200 bg-white p-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)]" aria-label="Status i realtid">
+        <section className="rounded-3xl border border-brand-100/80 bg-white p-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.6)]" aria-label="Status i realtid">
           <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <div>
               <h2 className="text-lg font-semibold text-neutral-900">Status i realtid</h2>
@@ -305,7 +305,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
               return (
                 <div
                   key={c.key}
-                  className="flex h-full flex-col justify-between rounded-2xl border border-brand-200 bg-gradient-to-br from-white via-white to-brand-50/60 p-5 shadow-[0_14px_40px_-32px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:shadow-[0_28px_60px_-45px_rgba(15,23,42,0.52)]"
+                  className="flex h-full flex-col justify-between rounded-2xl border border-brand-100 bg-gradient-to-br from-white via-white to-brand-50/60 p-5 shadow-[0_14px_40px_-32px_rgba(15,23,42,0.55)] transition hover:-translate-y-1 hover:shadow-[0_28px_60px_-45px_rgba(15,23,42,0.55)]"
                 >
                   <span
                     className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${parts.textClass} ${parts.borderClass}`}
@@ -331,7 +331,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
               <Link
                 key={track}
                 href={`/orders/track/${track}`}
-                className="group rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+                className="group rounded-2xl border border-brand-100 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.45)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-200 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.45)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
               >
                 <div className="flex items-start justify-between gap-4">
                   <div className="space-y-1">
@@ -347,8 +347,8 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
         )}
 
         {perms.showRecent && (
-          <section className="rounded-3xl border border-brand-200 bg-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)]">
-            <div className="flex items-center justify-between border-b border-brand-200 px-6 py-5">
+          <section className="rounded-3xl border border-brand-100 bg-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.6)]">
+            <div className="flex items-center justify-between border-b border-brand-100/70 px-6 py-5">
               <div>
                 <h2 className="text-lg font-semibold text-neutral-900">Senaste ordrar</h2>
                 <p className="text-sm text-neutral-600">Ett snapshot över vad som hänt den senaste tiden.</p>
@@ -361,7 +361,7 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
                 <ArrowRight className="h-4 w-4" aria-hidden="true" />
               </Link>
             </div>
-            <div className="divide-y divide-brand-200">
+            <div className="divide-y divide-brand-100/70">
               {loading && (
                 <div className="flex items-center gap-3 px-6 py-5 text-neutral-500">
                   <OrdinaLogoSpinner size={28} />
