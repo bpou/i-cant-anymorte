@@ -3,6 +3,15 @@
 
 import Link from "next/link";
 import { useEffect, useMemo, useState } from "react";
+import {
+  ArrowRight,
+  ClipboardCheck,
+  LayoutDashboard,
+  Lightbulb,
+  PlusCircle,
+  type LucideIcon,
+} from "lucide-react";
+
 import { APP_TRACKS, TRACK_NAMES, type AppTrack } from "@/lib/tracks";
 import { STATUS_COLOR_PARTS } from "@/lib/orderStatus";
 import { OrdinaLogoSpinner } from "@/components/OrdinaLoader";
@@ -29,9 +38,31 @@ const TRACK_DISPLAY: Record<AppTrack, string> = {
   D: TRACK_NAMES.D,
 };
 
-const statusChipClasses = (status: Status) => {
-  const parts = STATUS_COLOR_PARTS[status];
-  return `${parts.bgClass} ${parts.textClass} ${parts.borderClass}`;
+const QUICK_LINK_META: Record<
+  QuickLinkKey,
+  { title: string; description: string; href: string; icon: LucideIcon; accent: string }
+> = {
+  new: {
+    title: "Skapa order",
+    description: "Starta ett nytt uppdrag på några sekunder",
+    href: "/orders/new",
+    icon: PlusCircle,
+    accent: "bg-brand-50 text-brand-700 border border-brand-200",
+  },
+  overview: {
+    title: "Orderöversikt",
+    description: "Få en filtrerbar lista på alla ordrar",
+    href: "/orders/overview",
+    icon: LayoutDashboard,
+    accent: "bg-sky-50 text-sky-700 border border-sky-200",
+  },
+  completed: {
+    title: "Att fakturera",
+    description: "Säkra att färdiga uppdrag faktureras i tid",
+    href: "/orders/completed",
+    icon: ClipboardCheck,
+    accent: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+  },
 };
 
 const ROLE_GREETINGS: Record<Role, string> = {
@@ -101,7 +132,7 @@ function trackSummaryCopy(track: AppTrack) {
   return `Status och filer för spår ${track}`;
 }
 
-type ChipDef = { key: Status; title: string; color: string };
+type ChipDef = { key: Status; title: string };
 
 export default function HomeClient({ name, role }: { name: string; role: Role }) {
   const [summary, setSummary] = useState<SummaryMap>({});
@@ -156,148 +187,212 @@ export default function HomeClient({ name, role }: { name: string; role: Role })
 
   const chips: ChipDef[] = useMemo(
     () => [
-      { key: "INKOMMANDE", title: "Inkommande", color: statusChipClasses("INKOMMANDE") },
-      { key: "PAGAENDE", title: "Pågående", color: statusChipClasses("PAGAENDE") },
-      { key: "LEVERANS", title: "Leverans", color: statusChipClasses("LEVERANS") },
-      { key: "AVSLUTAD", title: "Avslutade", color: statusChipClasses("AVSLUTAD") },
+      { key: "INKOMMANDE", title: "Inkommande" },
+      { key: "PAGAENDE", title: "Pågående" },
+      { key: "LEVERANS", title: "Leverans" },
+      { key: "AVSLUTAD", title: "Avslutade" },
     ],
     []
   );
 
   const visibleChips = chips.filter((c) => perms.kpis.includes(c.key));
 
+  const firstName = name.split(" ")[0];
+
   return (
-    <div className="p-6 space-y-6">
-      <div>
-        <h1 className="text-xl font-semibold">Hej {name.split(" ")[0]}!</h1>
-        <p className="text-neutral-600 text-sm">{ROLE_GREETINGS[role]}</p>
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-3 auto-rows-fr">
-        {quickLinkSet.has("new") && (
-          <Link
-            href="/orders/new"
-            className="rounded-xl border border-neutral-200 bg-white p-4 hover:shadow-soft"
-          >
-            <div className="font-semibold">Skapa order</div>
-            <div className="text-sm text-neutral-600">Starta en ny order</div>
-          </Link>
-        )}
-
-        {quickLinkSet.has("completed") && (
-          <Link
-            href="/orders/completed"
-            className="rounded-xl border border-neutral-200 bg-white p-4 hover:shadow-soft"
-          >
-            <div className="font-semibold">
-              Avslutade{" "}
-              <span className="ml-1 inline-flex items-center gap-2 text-brand-600">
-                {toInvoice === null ? (
-                  <>
-                    <OrdinaLogoSpinner size={20} />
-                    <span className="sr-only">Laddar antal ordrar att fakturera</span>
-                  </>
-                ) : (
-                  `${toInvoice} ${toInvoice === 1 ? "order" : "ordrar"} att fakturera`
-                )}
+    <div className="bg-[radial-gradient(circle_at_top,_rgba(28,155,241,0.08),_transparent_55%)]">
+      <div className="mx-auto flex w-full max-w-6xl flex-col gap-10 px-4 py-10 sm:px-6 lg:px-10">
+        <header className="rounded-3xl border border-brand-200 bg-white px-7 py-9 shadow-[0_20px_60px_-40px_rgba(15,23,42,0.42)]">
+          <div className="flex flex-col gap-6 lg:flex-row lg:items-center lg:justify-between">
+            <div className="space-y-3">
+              <span className="inline-flex items-center gap-2 rounded-full border border-brand-200 bg-brand-50/70 px-3 py-1 text-xs font-semibold uppercase tracking-[0.24em] text-brand-600">
+                Välkommen tillbaka
               </span>
+              <div className="space-y-2">
+                <h1 className="text-3xl font-semibold text-neutral-900 sm:text-4xl">Hej {firstName}!</h1>
+                <p className="max-w-2xl text-sm leading-relaxed text-neutral-600">
+                  {ROLE_GREETINGS[role]} Här får du en tydlig överblick över vad som behöver din uppmärksamhet i dag och genvägar till dina viktigaste uppgifter.
+                </p>
+              </div>
             </div>
-            <div className="text-sm text-neutral-600">Bekräfta fakturering</div>
-          </Link>
-        )}
-
-        {quickLinkSet.has("overview") && (
-          <Link
-            href="/orders/overview"
-            className="rounded-xl border border-neutral-200 bg-white p-4 hover:shadow-soft"
-          >
-            <div className="font-semibold">Översikt</div>
-            <div className="text-sm text-neutral-600">Lista alla ordrar</div>
-          </Link>
-        )}
-
-        {perms.trackLinks.map((track) => (
-          <Link
-            key={track}
-            href={`/orders/track/${track}`}
-            className="rounded-xl border border-neutral-200 bg-white p-4 hover:shadow-soft"
-          >
-            <div className="text-sm text-neutral-500">Spår {track}</div>
-            <div className="text-lg font-semibold">{TRACK_DISPLAY[track]}</div>
-            <div className="text-xs text-neutral-500 mt-1">{trackSummaryCopy(track)}</div>
-          </Link>
-        ))}
-      </div>
-
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-8 gap-3 auto-rows-fr">
-        {visibleChips.map((c) => {
-          const total = loading ? undefined : (summary[c.key] ?? 0);
-          const indiv = loading ? undefined : (individuals[c.key] ?? 0);
-          const label = indiv === undefined ? null : indiv === 0 ? "Inga hela" : `${indiv} ${indiv === 1 ? "hel" : "hela"}`;
-
-          return (
-            <div key={c.key} className={`rounded-lg p-4 ${c.color} h-full flex flex-col gap-1`}>
-              <div className="text-xs">{c.title}</div>
-              <div className="text-lg font-semibold">{total === undefined ? "…" : total}</div>
-              {quickLinkSet.has("new") && label && (
-                <div className="text-[11px] text-neutral-700">{label}</div>
-              )}
+            <div className="flex w-full max-w-sm items-start gap-3 rounded-2xl border border-brand-200 bg-brand-50/40 p-4 text-sm text-neutral-600">
+              <span className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-white text-brand-600">
+                <Lightbulb className="h-5 w-5" aria-hidden="true" />
+              </span>
+              <div className="space-y-1">
+                <p className="font-semibold text-neutral-900">Snabbtips</p>
+                <p>Markera ordrar som &ldquo;hela&rdquo; för att tydligare se vad som väntar på fakturering.</p>
+              </div>
             </div>
-          );
-        })}
-      </div>
+          </div>
+        </header>
 
-      {perms.trackCards.length > 0 && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-4 gap-3">
-          {perms.trackCards.map((track) => (
+        <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Snabbåtgärder">
+          {perms.quickLinks.map((key) => {
+            const meta = QUICK_LINK_META[key];
+            const Icon = meta.icon;
+
+            return (
+              <Link
+                key={key}
+                href={meta.href}
+                className="group relative flex h-full flex-col justify-between overflow-hidden rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+              >
+                <span className={`inline-flex h-11 w-11 items-center justify-center rounded-full ${meta.accent}`}>
+                  <Icon className="h-5 w-5" aria-hidden="true" />
+                </span>
+                <div className="mt-4 space-y-1">
+                  <p className="text-base font-semibold text-neutral-900">{meta.title}</p>
+                  <p className="text-sm text-neutral-600">{meta.description}</p>
+                </div>
+                <div className="mt-5 flex items-center justify-between text-xs font-medium text-brand-500">
+                  <span className="inline-flex items-center gap-1">
+                    Gå till sidan
+                    <ArrowRight className="h-4 w-4 transition group-hover:translate-x-1" aria-hidden="true" />
+                  </span>
+                  {key === "completed" && (
+                    <span className="inline-flex items-center gap-2 rounded-full bg-emerald-50 px-3 py-1 text-[11px] text-emerald-700">
+                      {toInvoice === null ? (
+                        <>
+                          <OrdinaLogoSpinner size={16} />
+                          <span>Laddar…</span>
+                        </>
+                      ) : (
+                        `${toInvoice} ${toInvoice === 1 ? "order" : "ordrar"}`
+                      )}
+                    </span>
+                  )}
+                </div>
+              </Link>
+            );
+          })}
+
+          {perms.trackLinks.map((track) => (
             <Link
               key={track}
               href={`/orders/track/${track}`}
-              className="rounded-xl border border-neutral-200 bg-white p-4 hover:shadow-soft hover:border-brand-200 transition"
+              className="group relative overflow-hidden rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
             >
-              <div className="text-sm text-neutral-500">Spår {track}</div>
-              <div className="text-lg font-semibold">{TRACK_DISPLAY[track]}</div>
-              <div className="text-xs text-neutral-500 mt-1">{trackSummaryCopy(track)}</div>
+              <span className="inline-flex items-center gap-2 rounded-full bg-brand-50 px-3 py-1 text-xs font-medium text-brand-700">
+                Spår {track}
+              </span>
+              <div className="mt-4 space-y-1">
+                <p className="text-lg font-semibold text-neutral-900">{TRACK_DISPLAY[track]}</p>
+                <p className="text-sm text-neutral-600">{trackSummaryCopy(track)}</p>
+              </div>
+              <ArrowRight className="absolute right-5 top-5 h-5 w-5 text-brand-300 transition group-hover:translate-x-1" aria-hidden="true" />
             </Link>
           ))}
-        </div>
-      )}
+        </section>
 
-      {perms.showRecent && (
-        <div className="rounded-xl border border-neutral-200 bg-white">
-          <div className="flex items-center justify-between px-4 py-3 border-b border-neutral-200">
-            <div className="font-semibold">Senaste ordrar</div>
-            <Link
-              href="/orders/overview"
-              className="text-sm underline decoration-transparent hover:decoration-brand-500"
-            >
-              Visa alla
-            </Link>
+        <section className="rounded-3xl border border-brand-200 bg-white p-6 shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)]" aria-label="Status i realtid">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <h2 className="text-lg font-semibold text-neutral-900">Status i realtid</h2>
+              <p className="text-sm text-neutral-600">Direkt från orderflödet i dina spår.</p>
+            </div>
+            {quickLinkSet.has("new") && (
+              <p className="text-xs text-neutral-500">Tips: använd etiketten &ldquo;hel&rdquo; för att tydliggöra fakturering.</p>
+            )}
           </div>
-          <div className="divide-y divide-neutral-200">
-            {loading && (
-              <div className="flex items-center gap-3 px-4 py-3 text-neutral-500">
-                <OrdinaLogoSpinner size={28} />
-                <span>Laddar senaste ordrar</span>
-              </div>
-            )}
-            {!loading && recent.length === 0 && (
-              <div className="px-4 py-3 text-neutral-500">Inga ordrar ännu.</div>
-            )}
-            {recent.map((o) => (
-              <Link key={o.orderNumber} href={`/orders/${o.orderNumber}`} className="block px-4 py-3 hover:bg-neutral-50">
-                <div className="flex items-center justify-between">
-                  <div className="font-medium truncate">#{o.orderNumber} - {o.title}</div>
-                  <div className="text-xs text-neutral-500">{o.customerName ?? "-"}</div>
+          <div className="mt-6 grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
+            {visibleChips.map((c) => {
+              const total = loading ? undefined : (summary[c.key] ?? 0);
+              const indiv = loading ? undefined : (individuals[c.key] ?? 0);
+              const label = indiv === undefined ? null : indiv === 0 ? "Inga hela" : `${indiv} ${indiv === 1 ? "hel" : "hela"}`;
+              const parts = STATUS_COLOR_PARTS[c.key];
+
+              return (
+                <div
+                  key={c.key}
+                  className="flex h-full flex-col justify-between rounded-2xl border border-brand-200 bg-gradient-to-br from-white via-white to-brand-50/60 p-5 shadow-[0_14px_40px_-32px_rgba(15,23,42,0.5)] transition hover:-translate-y-1 hover:shadow-[0_28px_60px_-45px_rgba(15,23,42,0.52)]"
+                >
+                  <span
+                    className={`inline-flex w-fit items-center gap-2 rounded-full border px-3 py-1 text-xs font-semibold uppercase tracking-wide ${parts.textClass} ${parts.borderClass}`}
+                    style={{ backgroundColor: `${parts.bgHex}55` }}
+                  >
+                    {c.title}
+                  </span>
+                  <div className="mt-6 flex items-end justify-between gap-3">
+                    <span className="text-3xl font-semibold text-neutral-900">{total === undefined ? "…" : total}</span>
+                    {quickLinkSet.has("new") && label && (
+                      <span className="text-xs text-neutral-600">{label}</span>
+                    )}
+                  </div>
                 </div>
-                <div className="text-xs text-neutral-500 mt-0.5">
-                  Skapad {o.createdAt ? new Date(o.createdAt).toLocaleString("sv-SE") : "-"}
+              );
+            })}
+          </div>
+        </section>
+
+        {perms.trackCards.length > 0 && (
+          <section className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4" aria-label="Spårkort">
+            {perms.trackCards.map((track) => (
+              <Link
+                key={track}
+                href={`/orders/track/${track}`}
+                className="group rounded-2xl border border-brand-200 bg-white p-5 shadow-[0_18px_35px_-28px_rgba(15,23,42,0.4)] transition-all duration-200 hover:-translate-y-1 hover:border-brand-300 hover:shadow-[0_30px_60px_-40px_rgba(15,23,42,0.42)] focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-400"
+              >
+                <div className="flex items-start justify-between gap-4">
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-brand-600">Spår {track}</p>
+                    <p className="text-lg font-semibold text-neutral-900">{TRACK_DISPLAY[track]}</p>
+                    <p className="text-sm text-neutral-600">{trackSummaryCopy(track)}</p>
+                  </div>
+                  <ArrowRight className="h-5 w-5 text-brand-300 transition group-hover:translate-x-1" aria-hidden="true" />
                 </div>
               </Link>
             ))}
-          </div>
-        </div>
-      )}
+          </section>
+        )}
+
+        {perms.showRecent && (
+          <section className="rounded-3xl border border-brand-200 bg-white shadow-[0_24px_70px_-48px_rgba(15,23,42,0.55)]">
+            <div className="flex items-center justify-between border-b border-brand-200 px-6 py-5">
+              <div>
+                <h2 className="text-lg font-semibold text-neutral-900">Senaste ordrar</h2>
+                <p className="text-sm text-neutral-600">Ett snapshot över vad som hänt den senaste tiden.</p>
+              </div>
+              <Link
+                href="/orders/overview"
+                className="inline-flex items-center gap-2 text-sm font-semibold text-brand-600 transition hover:text-brand-700"
+              >
+                Visa alla
+                <ArrowRight className="h-4 w-4" aria-hidden="true" />
+              </Link>
+            </div>
+            <div className="divide-y divide-brand-200">
+              {loading && (
+                <div className="flex items-center gap-3 px-6 py-5 text-neutral-500">
+                  <OrdinaLogoSpinner size={28} />
+                  <span>Laddar senaste ordrar</span>
+                </div>
+              )}
+              {!loading && recent.length === 0 && (
+                <div className="px-6 py-5 text-neutral-500">Inga ordrar ännu.</div>
+              )}
+              {recent.map((o) => (
+                <Link
+                  key={o.orderNumber}
+                  href={`/orders/${o.orderNumber}`}
+                  className="flex items-center justify-between gap-4 px-6 py-5 transition hover:bg-brand-50/60"
+                >
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-neutral-900">#{o.orderNumber} – {o.title}</p>
+                    <p className="mt-1 text-xs text-neutral-500">
+                      Skapad {o.createdAt ? new Date(o.createdAt).toLocaleString("sv-SE") : "-"}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-3 text-sm text-neutral-500">
+                    <span className="truncate">{o.customerName ?? "-"}</span>
+                    <ArrowRight className="h-4 w-4 text-brand-300" aria-hidden="true" />
+                  </div>
+                </Link>
+              ))}
+            </div>
+          </section>
+        )}
+      </div>
     </div>
   );
 }
